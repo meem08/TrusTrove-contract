@@ -363,6 +363,33 @@ impl InvoiceContract {
         true
     }
 
+    pub fn get_status(env: Env, invoice_id: BytesN<32>) -> u32 {
+        let invoice: Invoice = env
+            .storage()
+            .persistent()
+            .get(&DataKey::Invoice(invoice_id))
+            .unwrap_or_else(|| panic_with_error!(&env, InvoiceError::NotFound));
+        invoice.status as u32
+    }
+
+    pub fn get_face_value(env: Env, invoice_id: BytesN<32>) -> u128 {
+        let invoice: Invoice = env
+            .storage()
+            .persistent()
+            .get(&DataKey::Invoice(invoice_id))
+            .unwrap_or_else(|| panic_with_error!(&env, InvoiceError::NotFound));
+        invoice.face_value
+    }
+
+    pub fn get_discount_bps(env: Env, invoice_id: BytesN<32>) -> u32 {
+        let invoice: Invoice = env
+            .storage()
+            .persistent()
+            .get(&DataKey::Invoice(invoice_id))
+            .unwrap_or_else(|| panic_with_error!(&env, InvoiceError::NotFound));
+        invoice.discount_bps
+    }
+
     pub fn get(env: Env, invoice_id: BytesN<32>) -> Invoice {
         env.storage()
             .persistent()
