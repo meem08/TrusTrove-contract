@@ -28,6 +28,7 @@ impl InvoiceContract {
             .instance()
             .set(&DataKey::RegistryContract, &registry_contract);
         env.storage().instance().set(&DataKey::Counter, &0u64);
+        Self::extend_instance_ttl(&env);
     }
 
     pub fn set_pool_contract(env: Env, pool_contract: Address) {
@@ -40,6 +41,7 @@ impl InvoiceContract {
         env.storage()
             .instance()
             .set(&DataKey::PoolContract, &pool_contract);
+        Self::extend_instance_ttl(&env);
     }
 
     pub fn create(
@@ -146,6 +148,7 @@ impl InvoiceContract {
             &DataKey::InvoicesByStatus(InvoiceStatus::Created as u32),
             &invoice_id,
         );
+        Self::extend_instance_ttl(&env);
 
         events::invoice_created(
             &env,
@@ -178,6 +181,7 @@ impl InvoiceContract {
         env.storage()
             .persistent()
             .extend_ttl(&inv_key, 100, 2_000_000);
+        Self::extend_instance_ttl(&env);
 
         self::move_status_index(
             &env,
@@ -219,6 +223,7 @@ impl InvoiceContract {
         env.storage()
             .persistent()
             .extend_ttl(&inv_key, 100, 2_000_000);
+        Self::extend_instance_ttl(&env);
 
         self::move_status_index(
             &env,
@@ -247,6 +252,7 @@ impl InvoiceContract {
         env.storage()
             .persistent()
             .extend_ttl(&inv_key, 100, 2_000_000);
+        Self::extend_instance_ttl(&env);
 
         self::move_status_index(
             &env,
@@ -302,6 +308,7 @@ impl InvoiceContract {
         env.storage()
             .persistent()
             .extend_ttl(&inv_key, 100, 2_000_000);
+        Self::extend_instance_ttl(&env);
         events::delivery_confirmed(&env, &invoice_id, &confirmer);
         true
     }
@@ -341,6 +348,7 @@ impl InvoiceContract {
         env.storage()
             .persistent()
             .extend_ttl(&inv_key, 100, 2_000_000);
+        Self::extend_instance_ttl(&env);
 
         self::move_status_index(
             &env,
@@ -383,6 +391,7 @@ impl InvoiceContract {
         env.storage()
             .persistent()
             .extend_ttl(&inv_key, 100, 2_000_000);
+        Self::extend_instance_ttl(&env);
 
         self::move_status_index(&env, &invoice_id, prev_status, InvoiceStatus::Defaulted);
 
@@ -534,4 +543,10 @@ fn move_status_index(env: &Env, invoice_id: &BytesN<32>, from: InvoiceStatus, to
     env.storage()
         .persistent()
         .extend_ttl(&to_key, 100, 2_000_000);
+}
+
+impl InvoiceContract {
+    fn extend_instance_ttl(env: &Env) {
+        env.storage().instance().extend_ttl(100, 2_000_000);
+    }
 }

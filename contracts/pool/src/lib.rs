@@ -49,6 +49,7 @@ impl PoolContract {
         env.storage()
             .instance()
             .set(&DataKey::ActiveInvoiceCount, &0u32);
+        Self::extend_instance_ttl(&env);
     }
 
     pub fn get_usdc_asset(env: Env) -> Address {
@@ -117,6 +118,7 @@ impl PoolContract {
             .extend_ttl(&lp_init_key, 100, 2_000_000);
 
         events::lp_deposited(&env, &lp, usdc_amount, shares_to_issue);
+        Self::extend_instance_ttl(&env);
         shares_to_issue
     }
 
@@ -187,6 +189,7 @@ impl PoolContract {
             .extend_ttl(&yield_key, 100, 2_000_000);
 
         events::lp_withdrawn(&env, &lp, usdc_to_return, shares);
+        Self::extend_instance_ttl(&env);
         usdc_to_return
     }
 
@@ -287,6 +290,7 @@ impl PoolContract {
             .extend_ttl(&funded_key, 100, 2_000_000);
 
         events::invoice_funded(&env, &invoice_id, funded_amount);
+        Self::extend_instance_ttl(&env);
         true
     }
 
@@ -344,6 +348,7 @@ impl PoolContract {
         env.storage().persistent().remove(&funded_key);
 
         events::repayment_received(&env, &invoice_id, amount, yield_amount);
+        Self::extend_instance_ttl(&env);
         true
     }
 
@@ -397,6 +402,7 @@ impl PoolContract {
         env.storage().persistent().remove(&funded_key);
 
         events::invoice_defaulted(&env, &invoice_id, funded_amount);
+        Self::extend_instance_ttl(&env);
         true
     }
 
@@ -499,5 +505,9 @@ impl PoolContract {
             return 0;
         }
         (total_funded * 10000 / total_deposits) as u32
+    }
+
+    fn extend_instance_ttl(env: &Env) {
+        env.storage().instance().extend_ttl(100, 2_000_000);
     }
 }

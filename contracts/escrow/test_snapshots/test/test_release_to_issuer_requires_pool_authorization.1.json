@@ -1,6 +1,6 @@
 {
   "generators": {
-    "address": 4,
+    "address": 5,
     "nonce": 0
   },
   "auth": [
@@ -43,7 +43,7 @@
               "function_name": "lock",
               "args": [
                 {
-                  "bytes": "000000000000000a000000000000000000000000000000000000000000000000"
+                  "bytes": "0000000000000000000000000000000000000000000000000000000000000000"
                 },
                 {
                   "u128": {
@@ -262,7 +262,7 @@
                   "symbol": "Locked"
                 },
                 {
-                  "bytes": "000000000000000a000000000000000000000000000000000000000000000000"
+                  "bytes": "0000000000000000000000000000000000000000000000000000000000000000"
                 }
               ]
             },
@@ -282,7 +282,7 @@
                       "symbol": "Locked"
                     },
                     {
-                      "bytes": "000000000000000a000000000000000000000000000000000000000000000000"
+                      "bytes": "0000000000000000000000000000000000000000000000000000000000000000"
                     }
                   ]
                 },
@@ -305,7 +305,7 @@
                         "symbol": "invoice_id"
                       },
                       "val": {
-                        "bytes": "000000000000000a000000000000000000000000000000000000000000000000"
+                        "bytes": "0000000000000000000000000000000000000000000000000000000000000000"
                       }
                     },
                     {
@@ -511,7 +511,7 @@
             "data": {
               "vec": [
                 {
-                  "bytes": "000000000000000a000000000000000000000000000000000000000000000000"
+                  "bytes": "0000000000000000000000000000000000000000000000000000000000000000"
                 },
                 {
                   "u128": {
@@ -590,32 +590,6 @@
       "event": {
         "ext": "v0",
         "contract_id": "0000000000000000000000000000000000000000000000000000000000000004",
-        "type_": "contract",
-        "body": {
-          "v0": {
-            "topics": [
-              {
-                "symbol": "funds_locked"
-              },
-              {
-                "bytes": "0000000000000000000000000000000000000000000000000000000000000000"
-              }
-            ],
-            "data": {
-              "u128": {
-                "hi": 0,
-                "lo": 1000000000
-              }
-            }
-          }
-        }
-      },
-      "failed_call": false
-    },
-    {
-      "event": {
-        "ext": "v0",
-        "contract_id": "0000000000000000000000000000000000000000000000000000000000000004",
         "type_": "diagnostic",
         "body": {
           "v0": {
@@ -650,11 +624,18 @@
                 "bytes": "0000000000000000000000000000000000000000000000000000000000000004"
               },
               {
-                "symbol": "get_locked"
+                "symbol": "release_to_issuer"
               }
             ],
             "data": {
-              "bytes": "000000000000000a000000000000000000000000000000000000000000000000"
+              "vec": [
+                {
+                  "bytes": "0000000000000000000000000000000000000000000000000000000000000000"
+                },
+                {
+                  "address": "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAK3IM"
+                }
+              ]
             }
           }
         }
@@ -670,17 +651,140 @@
           "v0": {
             "topics": [
               {
-                "symbol": "fn_return"
+                "symbol": "error"
               },
               {
-                "symbol": "get_locked"
+                "error": {
+                  "auth": "invalid_action"
+                }
               }
             ],
             "data": {
-              "u128": {
-                "hi": 0,
-                "lo": 1000000000
+              "vec": [
+                {
+                  "string": "Unauthorized function call for address"
+                },
+                {
+                  "address": "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAFCT4"
+                }
+              ]
+            }
+          }
+        }
+      },
+      "failed_call": true
+    },
+    {
+      "event": {
+        "ext": "v0",
+        "contract_id": "0000000000000000000000000000000000000000000000000000000000000004",
+        "type_": "diagnostic",
+        "body": {
+          "v0": {
+            "topics": [
+              {
+                "symbol": "error"
+              },
+              {
+                "error": {
+                  "auth": "invalid_action"
+                }
               }
+            ],
+            "data": {
+              "string": "escalating error to panic"
+            }
+          }
+        }
+      },
+      "failed_call": true
+    },
+    {
+      "event": {
+        "ext": "v0",
+        "contract_id": "0000000000000000000000000000000000000000000000000000000000000004",
+        "type_": "diagnostic",
+        "body": {
+          "v0": {
+            "topics": [
+              {
+                "symbol": "error"
+              },
+              {
+                "error": {
+                  "auth": "invalid_action"
+                }
+              }
+            ],
+            "data": {
+              "string": "caught error from function"
+            }
+          }
+        }
+      },
+      "failed_call": true
+    },
+    {
+      "event": {
+        "ext": "v0",
+        "contract_id": null,
+        "type_": "diagnostic",
+        "body": {
+          "v0": {
+            "topics": [
+              {
+                "symbol": "error"
+              },
+              {
+                "error": {
+                  "auth": "invalid_action"
+                }
+              }
+            ],
+            "data": {
+              "vec": [
+                {
+                  "string": "contract call failed"
+                },
+                {
+                  "symbol": "release_to_issuer"
+                },
+                {
+                  "vec": [
+                    {
+                      "bytes": "0000000000000000000000000000000000000000000000000000000000000000"
+                    },
+                    {
+                      "address": "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAK3IM"
+                    }
+                  ]
+                }
+              ]
+            }
+          }
+        }
+      },
+      "failed_call": false
+    },
+    {
+      "event": {
+        "ext": "v0",
+        "contract_id": null,
+        "type_": "diagnostic",
+        "body": {
+          "v0": {
+            "topics": [
+              {
+                "symbol": "error"
+              },
+              {
+                "error": {
+                  "auth": "invalid_action"
+                }
+              }
+            ],
+            "data": {
+              "string": "escalating error to panic"
             }
           }
         }

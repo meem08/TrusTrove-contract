@@ -21,6 +21,7 @@ impl RegistryContract {
         }
         admin.require_auth();
         env.storage().instance().set(&DataKey::Admin, &admin);
+        Self::extend_instance_ttl(&env);
     }
 
     pub fn register_issuer(env: Env, address: Address, metadata: Map<String, String>) -> bool {
@@ -43,6 +44,7 @@ impl RegistryContract {
         env.storage().persistent().set(&key, &profile);
         env.storage().persistent().extend_ttl(&key, 100, 2_000_000);
         events::issuer_registered(&env, &address);
+        Self::extend_instance_ttl(&env);
         true
     }
 
@@ -66,6 +68,7 @@ impl RegistryContract {
         env.storage().persistent().set(&key, &profile);
         env.storage().persistent().extend_ttl(&key, 100, 2_000_000);
         events::buyer_registered(&env, &address);
+        Self::extend_instance_ttl(&env);
         true
     }
 
@@ -101,6 +104,7 @@ impl RegistryContract {
         env.storage().persistent().set(&key, &profile);
         env.storage().persistent().extend_ttl(&key, 100, 2_000_000);
         events::address_revoked(&env, &address);
+        Self::extend_instance_ttl(&env);
         true
     }
 
@@ -109,5 +113,9 @@ impl RegistryContract {
             .instance()
             .get(&DataKey::Admin)
             .unwrap_or_else(|| panic_with_error!(&env, RegistryError::NotFound))
+    }
+
+    fn extend_instance_ttl(env: &Env) {
+        env.storage().instance().extend_ttl(100, 2_000_000);
     }
 }

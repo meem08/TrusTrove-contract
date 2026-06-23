@@ -3,6 +3,7 @@
 use soroban_sdk::{contract, contractimpl, panic_with_error, token, Address, BytesN, Env};
 
 mod errors;
+mod events;
 mod test;
 mod types;
 
@@ -35,6 +36,7 @@ impl EscrowContract {
         env.storage()
             .instance()
             .set(&DataKey::UsdcAsset, &usdc_asset);
+        Self::extend_instance_ttl(&env);
     }
 
     pub fn lock(env: Env, invoice_id: BytesN<32>, amount: u128) -> bool {
@@ -65,6 +67,8 @@ impl EscrowContract {
         };
         env.storage().persistent().set(&key, &record);
         env.storage().persistent().extend_ttl(&key, 100, 2_000_000);
+        Self::extend_instance_ttl(&env);
+        events::funds_locked(&env, &invoice_id, amount);
 
         true
     }
@@ -93,6 +97,8 @@ impl EscrowContract {
         );
 
         env.storage().persistent().remove(&key);
+        Self::extend_instance_ttl(&env);
+        events::released_to_issuer(&env, &invoice_id, &issuer, record.amount);
         true
     }
 
@@ -105,11 +111,15 @@ impl EscrowContract {
         pool.require_auth();
 
         let key = DataKey::Locked(invoice_id.clone());
-        let _record: EscrowRecord = env
+        let record: EscrowRecord = env
             .storage()
             .persistent()
             .get(&key)
             .unwrap_or_else(|| panic_with_error!(&env, EscrowError::NotFound));
+
+        if repayment_amount != record.amount {
+            panic_with_error!(&env, EscrowError::InvalidAmount);
+        }
 
         let usdc_id: Address = env.storage().instance().get(&DataKey::UsdcAsset).unwrap();
         let usdc = token::Client::new(&env, &usdc_id);
@@ -120,6 +130,8 @@ impl EscrowContract {
         );
 
         env.storage().persistent().remove(&key);
+        Self::extend_instance_ttl(&env);
+        events::released_to_pool(&env, &invoice_id, &pool, repayment_amount);
         true
     }
 
@@ -151,6 +163,8 @@ impl EscrowContract {
         );
 
         env.storage().persistent().remove(&key);
+        Self::extend_instance_ttl(&env);
+        events::default_resolved(&env, &invoice_id, &pool, record.amount);
         true
     }
 
@@ -160,5 +174,9 @@ impl EscrowContract {
             .get::<_, EscrowRecord>(&DataKey::Locked(invoice_id))
             .map(|r| r.amount)
             .unwrap_or(0)
+    }
+
+    fn extend_instance_ttl(env: &Env) {
+        env.storage().instance().extend_ttl(100, 2_000_000);
     }
 }
