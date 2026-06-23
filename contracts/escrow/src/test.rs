@@ -31,6 +31,14 @@ impl MockToken {
     }
 }
 
+#[contract]
+pub struct MockCaller;
+
+#[contractimpl]
+impl MockCaller {
+    pub fn noop(_env: Env) {}
+}
+
 #[contracttype]
 pub struct BalanceKey(Address);
 
@@ -44,8 +52,8 @@ fn setup() -> (
     let env = Env::default();
     env.mock_all_auths();
 
-    let admin = Address::generate(&env);
-    let pool = Address::generate(&env);
+    let admin = env.register_contract(None, MockCaller);
+    let pool = env.register_contract(None, MockCaller);
     let usdc_id = env.register_contract(None, MockToken);
     let _mock_token = MockTokenClient::new(&env, &usdc_id);
 
@@ -238,7 +246,39 @@ fn test_handle_default_returns_funds_to_pool() {
     let amount: u128 = 1_000_000_000;
 
     client.lock(&invoice_id, &amount);
-    let result = client.handle_default(&invoice_id);
+    let result = client.handle_default(&invoice_id, &_pool /* caller */);
+    assert!(result);
+
+    let locked = client.get_locked(&invoice_id);
+    assert_eq!(locked, 0);
+}
+
+#[test]
+fn test_handle_default_invoked_by_pool_succeeds() {
+    let (env, client, _admin, pool, _usdc) = setup();
+    let invoice_id = generate_invoice_id(&env);
+    let amount: u128 = 1_000_000_000;
+
+    client.lock(&invoice_id, &amount);
+
+    // Call handle_default with pool as the caller (mocking authorizations is enabled)
+    let result = client.handle_default(&invoice_id, &pool);
+    assert!(result);
+
+    let locked = client.get_locked(&invoice_id);
+    assert_eq!(locked, 0);
+}
+
+#[test]
+fn test_handle_default_invoked_by_admin_succeeds() {
+    let (env, client, admin, _pool, _usdc) = setup();
+    let invoice_id = generate_invoice_id(&env);
+    let amount: u128 = 1_000_000_000;
+
+    client.lock(&invoice_id, &amount);
+
+    // Call handle_default with admin as the caller
+    let result = client.handle_default(&invoice_id, &admin);
     assert!(result);
 
     let locked = client.get_locked(&invoice_id);
@@ -251,7 +291,7 @@ fn test_handle_default_no_record_returns_false() {
     let (env, client, _admin, _pool, _usdc) = setup();
     let invoice_id = generate_invoice_id(&env);
 
-    let result = client.handle_default(&invoice_id);
+    let result = client.handle_default(&invoice_id, &_pool /* caller */);
     assert!(!result);
 }
 
