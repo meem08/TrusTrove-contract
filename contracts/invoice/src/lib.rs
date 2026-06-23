@@ -2,7 +2,7 @@
 
 use soroban_sdk::{
     contract, contractimpl, panic_with_error, token, xdr::ToXdr, Address, Bytes, BytesN, Env,
-    IntoVal, Symbol, Vec,
+    IntoVal, Map, String, Symbol, Vec,
 };
 
 mod errors;
@@ -142,9 +142,16 @@ impl InvoiceContract {
             .persistent()
             .extend_ttl(&inv_key, 100, 2_000_000);
 
+<<<<<<< HEAD
         self::extend_issuer_index(&env, &issuer, &invoice_id);
         self::extend_buyer_index(&env, &buyer, &invoice_id);
         self::extend_status_index(&env, InvoiceStatus::Created, &invoice_id);
+        Self::extend_instance_ttl(&env);
+=======
+        self::extend_issuer_index(&env, &issuer, &invoice_id);
+        self::extend_buyer_index(&env, &buyer, &invoice_id);
+        self::extend_status_index(&env, InvoiceStatus::Created, &invoice_id);
+        self::increment_status_count(&env, InvoiceStatus::Created);
         Self::extend_instance_ttl(&env);
 
         events::invoice_created(
@@ -517,6 +524,27 @@ impl InvoiceContract {
         result
     }
 
+    pub fn get_counts(env: Env) -> Map<String, u64> {
+        let mut counts: Map<String, u64> = Map::new(&env);
+        let statuses = [
+            InvoiceStatus::Created,
+            InvoiceStatus::Listed,
+            InvoiceStatus::Funded,
+            InvoiceStatus::Active,
+            InvoiceStatus::Confirmed,
+            InvoiceStatus::Repaid,
+            InvoiceStatus::Defaulted,
+            InvoiceStatus::Expired,
+        ];
+        for status in statuses {
+            let key = String::from_slice(&env, status.as_str());
+            let value = read_status_count(&env, status);
+            counts.set(&key, &value);
+        }
+        counts
+    }
+}
+
     pub fn set_expiry_window(env: Env, window: u64) {
         let admin: Address = env
             .storage()
@@ -638,12 +666,38 @@ fn extend_status_index(env: &Env, status: InvoiceStatus, invoice_id: &BytesN<32>
         .extend_ttl(&count_key, 100, 2_000_000);
 }
 
-fn move_status_index(env: &Env, invoice_id: &BytesN<32>, _from: InvoiceStatus, to: InvoiceStatus) {
+fn move_status_index(env: &Env, invoice_id: &BytesN<32>, from: InvoiceStatus, to: InvoiceStatus) {
     extend_status_index(env, to, invoice_id);
+    decrement_status_count(env, from);
+    increment_status_count(env, to);
 }
 
 impl InvoiceContract {
     fn extend_instance_ttl(env: &Env) {
         env.storage().instance().extend_ttl(100, 2_000_000);
     }
+}
+
+fn increment_status_count(env: &Env, status: InvoiceStatus) {
+    let key = DataKey::StatusCount(status as u32);
+    let current: u64 = env.storage().persistent().get(&key).unwrap_or(0u64);
+    env.storage().persistent().set(&key, &(current + 1));
+    env.storage().persistent().extend_ttl(&key, 100, 2_000_000);
+}
+
+fn decrement_status_count(env: &Env, status: InvoiceStatus) {
+    let key = DataKey::StatusCount(status as u32);
+    let current: u64 = env.storage().persistent().get(&key).unwrap_or(0u64);
+    let next = current
+        .checked_sub(1)
+        .unwrap_or_else(|| panic_with_error!(env, InvoiceError::InvalidStatusTransition));
+    env.storage().persistent().set(&key, &next);
+    env.storage().persistent().extend_ttl(&key, 100, 2_000_000);
+}
+
+fn read_status_count(env: &Env, status: InvoiceStatus) -> u64 {
+    env.storage()
+        .persistent()
+        .get(&DataKey::StatusCount(status as u32))
+        .unwrap_or(0u64)
 }
