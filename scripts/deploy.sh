@@ -1,7 +1,15 @@
 #!/bin/bash
 set -e
 
-STELLAR="/mnt/c/Program Files (x86)/Stellar CLI/stellar.exe"
+# Prefer a globally available `stellar` on PATH, fall back to a common WSL installation
+if command -v stellar &> /dev/null; then
+  STELLAR="stellar"
+elif [ -f "/mnt/c/Program Files (x86)/Stellar CLI/stellar.exe" ]; then
+  STELLAR="/mnt/c/Program Files (x86)/Stellar CLI/stellar.exe"
+else
+  echo "Error: stellar CLI not found on PATH or default Windows path."
+  exit 1
+fi
 
 if [ -f .env ]; then
   source .env
