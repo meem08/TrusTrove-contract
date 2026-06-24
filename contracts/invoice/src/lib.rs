@@ -585,7 +585,7 @@ impl InvoiceContract {
             panic_with_error!(&env, InvoiceError::ListingNotExpired);
         }
 
-        let prev_status = invoice.status.clone();
+        let prev_status = invoice.status;
         invoice.status = InvoiceStatus::Expired;
         env.storage().persistent().set(&inv_key, &invoice);
 
