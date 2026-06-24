@@ -91,16 +91,22 @@ fn test_update_metadata_self_succeeds() {
     let admin = Address::generate(&env);
     client.initialize(&admin);
     let issuer = Address::generate(&env);
-    let metadata = map![&env, (
-        String::from_str(&env, "name"),
-        String::from_str(&env, "Acme Corp"),
-    )];
+    let metadata = map![
+        &env,
+        (
+            String::from_str(&env, "name"),
+            String::from_str(&env, "Acme Corp"),
+        )
+    ];
     client.register_issuer(&issuer, &metadata);
 
-    let updated_metadata = map![&env, (
-        String::from_str(&env, "name"),
-        String::from_str(&env, "Acme LLC"),
-    )];
+    let updated_metadata = map![
+        &env,
+        (
+            String::from_str(&env, "name"),
+            String::from_str(&env, "Acme LLC"),
+        )
+    ];
     let result = client.update_metadata(&issuer, &updated_metadata);
     assert!(result);
 
@@ -127,10 +133,13 @@ fn test_update_metadata_wrong_auth_panics() {
     let client = RegistryContractClient::new(&env, &contract_id);
 
     let issuer = Address::generate(&env);
-    let metadata = map![&env, (
-        String::from_str(&env, "name"),
-        String::from_str(&env, "Acme Corp"),
-    )];
+    let metadata = map![
+        &env,
+        (
+            String::from_str(&env, "name"),
+            String::from_str(&env, "Acme Corp"),
+        )
+    ];
     let profile = Profile {
         address: issuer.clone(),
         role: Role::Issuer,
@@ -140,16 +149,21 @@ fn test_update_metadata_wrong_auth_panics() {
     };
 
     env.as_contract(&contract_id, || {
-        env.storage().persistent().set(&DataKey::Profile(issuer.clone()), &profile);
+        env.storage()
+            .persistent()
+            .set(&DataKey::Profile(issuer.clone()), &profile);
         env.storage()
             .persistent()
             .extend_ttl(&DataKey::Profile(issuer.clone()), 100, 2_000_000);
     });
 
-    let updated_metadata = map![&env, (
-        String::from_str(&env, "name"),
-        String::from_str(&env, "Bad Actor"),
-    )];
+    let updated_metadata = map![
+        &env,
+        (
+            String::from_str(&env, "name"),
+            String::from_str(&env, "Bad Actor"),
+        )
+    ];
     client.update_metadata(&issuer, &updated_metadata);
 }
 
