@@ -45,6 +45,33 @@ impl MockPool {
         let key = Symbol::new(&env, "asset");
         env.storage().instance().get(&key).unwrap()
     }
+
+    pub fn receive_repayment_with_refund(
+        env: Env,
+        _invoice_id: BytesN<32>,
+        _amount: u128,
+        refund: u128,
+        _buyer: Address,
+    ) -> bool {
+        let key = Symbol::new(&env, "last_refund");
+        env.storage().instance().set(&key, &refund);
+        true
+    }
+
+    pub fn get_last_refund(env: Env) -> u128 {
+        let key = Symbol::new(&env, "last_refund");
+        env.storage().instance().get(&key).unwrap_or(0)
+    }
+}
+
+#[contract]
+pub struct MockToken;
+
+#[contractimpl]
+impl MockToken {
+    pub fn transfer(_env: Env, _from: Address, _to: Address, _amount: i128) {
+        // no-op for tests (auth is mocked)
+    }
 }
 
 type Setup = (
@@ -74,7 +101,8 @@ fn setup() -> Setup {
     let admin = Address::generate(&env);
     client.initialize(&admin, &registry_id);
 
-    let usdc_asset = Address::generate(&env);
+    let token_id = env.register_contract(None, MockToken);
+    let usdc_asset = token_id;
 
     (env, client, issuer, buyer, registry_client, usdc_asset)
 }
@@ -431,4 +459,106 @@ fn test_get_funding_asset_returns_correct_asset() {
 
     let asset = client.get_funding_asset(&invoice_id);
     assert_eq!(asset, usdc);
+}
+
+#[test]
+fn test_repay_early_refund_25_percent() {
+    let (env, client, issuer, buyer, _, usdc) = setup();
+    let face_value: u128 = 10_000;
+    let due_date = env.ledger().timestamp() + 60;
+
+    let invoice_id = client.create(&issuer, &buyer, &face_value, &due_date, &usdc);
+    client.list_for_financing(&invoice_id, &200);
+
+    let pool = mock_pool_with_asset(&env, &usdc);
+    client.set_pool_contract(&pool);
+    let funded_amount: u128 = face_value * (10000 - 200) / 10000;
+    client.mark_funded(&invoice_id, &pool, &usdc, &funded_amount);
+    client.mark_shipped(&invoice_id);
+    client.confirm_delivery(&invoice_id, &issuer);
+    client.confirm_delivery(&invoice_id, &buyer);
+
+    let funded_at = client.get(&invoice_id).funded_at.unwrap();
+    let term = due_date - funded_at;
+    // 25% elapsed
+    env.ledger().set_timestamp(funded_at + term / 4);
+
+    let result = client.repay_early(&invoice_id);
+    assert!(result);
+
+    let pool_client = MockPoolClient::new(&env, &pool);
+    let last_refund = pool_client.get_last_refund();
+
+    let discount = face_value - funded_amount;
+    let earned = discount * (term / 4) as u128 / (term as u128);
+    let expected_refund = discount.saturating_sub(earned);
+    assert_eq!(last_refund, expected_refund);
+}
+
+#[test]
+fn test_repay_early_refund_50_percent() {
+    let (env, client, issuer, buyer, _, usdc) = setup();
+    let face_value: u128 = 10_000;
+    let due_date = env.ledger().timestamp() + 60;
+
+    let invoice_id = client.create(&issuer, &buyer, &face_value, &due_date, &usdc);
+    client.list_for_financing(&invoice_id, &200);
+
+    let pool = mock_pool_with_asset(&env, &usdc);
+    client.set_pool_contract(&pool);
+    let funded_amount: u128 = face_value * (10000 - 200) / 10000;
+    client.mark_funded(&invoice_id, &pool, &usdc, &funded_amount);
+    client.mark_shipped(&invoice_id);
+    client.confirm_delivery(&invoice_id, &issuer);
+    client.confirm_delivery(&invoice_id, &buyer);
+
+    let funded_at = client.get(&invoice_id).funded_at.unwrap();
+    let term = due_date - funded_at;
+    // 50% elapsed
+    env.ledger().set_timestamp(funded_at + term / 2);
+
+    let result = client.repay_early(&invoice_id);
+    assert!(result);
+
+    let pool_client = MockPoolClient::new(&env, &pool);
+    let last_refund = pool_client.get_last_refund();
+
+    let discount = face_value - funded_amount;
+    let earned = discount * (term / 2) as u128 / (term as u128);
+    let expected_refund = discount.saturating_sub(earned);
+    assert_eq!(last_refund, expected_refund);
+}
+
+#[test]
+fn test_repay_early_refund_75_percent() {
+    let (env, client, issuer, buyer, _, usdc) = setup();
+    let face_value: u128 = 10_000;
+    let due_date = env.ledger().timestamp() + 60;
+
+    let invoice_id = client.create(&issuer, &buyer, &face_value, &due_date, &usdc);
+    client.list_for_financing(&invoice_id, &200);
+
+    let pool = mock_pool_with_asset(&env, &usdc);
+    client.set_pool_contract(&pool);
+    let funded_amount: u128 = face_value * (10000 - 200) / 10000;
+    client.mark_funded(&invoice_id, &pool, &usdc, &funded_amount);
+    client.mark_shipped(&invoice_id);
+    client.confirm_delivery(&invoice_id, &issuer);
+    client.confirm_delivery(&invoice_id, &buyer);
+
+    let funded_at = client.get(&invoice_id).funded_at.unwrap();
+    let term = due_date - funded_at;
+    // 75% elapsed
+    env.ledger().set_timestamp(funded_at + term * 3 / 4);
+
+    let result = client.repay_early(&invoice_id);
+    assert!(result);
+
+    let pool_client = MockPoolClient::new(&env, &pool);
+    let last_refund = pool_client.get_last_refund();
+
+    let discount = face_value - funded_amount;
+    let earned = discount * (term * 3 / 4) as u128 / (term as u128);
+    let expected_refund = discount.saturating_sub(earned);
+    assert_eq!(last_refund, expected_refund);
 }
