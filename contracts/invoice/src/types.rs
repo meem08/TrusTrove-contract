@@ -41,6 +41,7 @@ pub enum DataKey {
     RegistryContract,
     PoolContract,
     Counter,
+    ExpiryWindow,
     Invoice(BytesN<32>),
     IssuerIndexCount(Address),
     BuyerIndexCount(Address),

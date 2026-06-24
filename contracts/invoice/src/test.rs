@@ -233,6 +233,23 @@ fn test_get_by_status_returns_correct_invoices() {
 }
 
 #[test]
+fn test_expire_listing_transitions_to_expired_after_window() {
+    let (env, client, issuer, buyer, _, usdc) = setup();
+    let due_date = env.ledger().timestamp() + 86400;
+    let invoice_id = client.create(&issuer, &buyer, &1_000_000_000, &due_date, &usdc);
+
+    client.list_for_financing(&invoice_id, &200);
+    client.set_expiry_window(&100);
+    env.ledger().set_timestamp(env.ledger().timestamp() + 101);
+
+    let result = client.expire_listing(&invoice_id);
+    assert!(result);
+
+    let invoice = client.get(&invoice_id);
+    assert_eq!(invoice.status, InvoiceStatus::Expired);
+}
+
+#[test]
 #[should_panic(expected = "Error(Contract, #2)")]
 fn test_get_unknown_panics() {
     let (env, client, _, _, _, _) = setup();
@@ -434,14 +451,12 @@ fn test_get_funding_asset_returns_correct_asset() {
 }
 
 #[test]
-<<<<<<< HEAD
 fn test_expire_listing_succeeds_by_issuer() {
     let (env, client, issuer, buyer, _, usdc) = setup();
     let due_date = env.ledger().timestamp() + 86400;
     let invoice_id = client.create(&issuer, &buyer, &1_000_000_000, &due_date, &usdc);
     client.list_for_financing(&invoice_id, &200);
 
-    // Fast forward ledger time by 7 days + 1 second
     env.ledger()
         .set_timestamp(env.ledger().timestamp() + 7 * 24 * 60 * 60 + 1);
 
@@ -457,7 +472,6 @@ fn test_expire_listing_succeeds_by_admin() {
     let invoice_id = client.create(&issuer, &buyer, &1_000_000_000, &due_date, &usdc);
     client.list_for_financing(&invoice_id, &200);
 
-    // Fast forward ledger time by 7 days + 1 second
     env.ledger()
         .set_timestamp(env.ledger().timestamp() + 7 * 24 * 60 * 60 + 1);
 
@@ -474,7 +488,6 @@ fn test_expire_listing_early_panics() {
     let invoice_id = client.create(&issuer, &buyer, &1_000_000_000, &due_date, &usdc);
     client.list_for_financing(&invoice_id, &200);
 
-    // Fast forward ledger time by only 5 days (less than 7 days)
     env.ledger()
         .set_timestamp(env.ledger().timestamp() + 5 * 24 * 60 * 60);
 
@@ -484,15 +497,10 @@ fn test_expire_listing_early_panics() {
 #[test]
 #[should_panic(expected = "Error(Contract, #8)")]
 fn test_expire_listing_wrong_status_panics() {
-=======
-fn test_get_counts_updates_through_lifecycle() {
->>>>>>> fd30796 (feat(invoice): add invoice status counts and get_counts API)
     let (env, client, issuer, buyer, _, usdc) = setup();
     let due_date = env.ledger().timestamp() + 86400;
     let invoice_id = client.create(&issuer, &buyer, &1_000_000_000, &due_date, &usdc);
 
-<<<<<<< HEAD
-    // Fast forward ledger time
     env.ledger()
         .set_timestamp(env.ledger().timestamp() + 7 * 24 * 60 * 60 + 1);
 
@@ -506,11 +514,62 @@ fn test_expire_listing_configurable_window() {
     let invoice_id = client.create(&issuer, &buyer, &1_000_000_000, &due_date, &usdc);
     client.list_for_financing(&invoice_id, &200);
 
-    // Set expiry window to 1 day (86400 seconds)
     client.set_expiry_window(&86400);
     assert_eq!(client.get_expiry_window(), 86400);
 
-    // Fast forward by 1 day + 1 second
+    env.ledger()
+        .set_timestamp(env.ledger().timestamp() + 86400 + 1);
+
+    let result = client.expire_listing(&invoice_id);
+    assert!(result);
+    assert_eq!(client.get(&invoice_id).status, InvoiceStatus::Expired);
+}
+
+#[test]
+fn test_get_counts_updates_through_lifecycle() {
+    let (env, client, issuer, buyer, _, usdc) = setup();
+    let due_date = env.ledger().timestamp() + 86400;
+    let invoice_id = client.create(&issuer, &buyer, &1_000_000_000, &due_date, &usdc);
+
+    let counts = client.get_counts();
+    assert_eq!(counts.len(), 8);
+    assert_eq!(counts.get(&String::from_slice(&env, "Created")).unwrap(), &1u64);
+    assert_eq!(counts.get(&String::from_slice(&env, "Listed")).unwrap(), &0u64);
+    assert_eq!(counts.get(&String::from_slice(&env, "Funded")).unwrap(), &0u64);
+    assert_eq!(counts.get(&String::from_slice(&env, "Active")).unwrap(), &0u64);
+    assert_eq!(counts.get(&String::from_slice(&env, "Confirmed")).unwrap(), &0u64);
+    assert_eq!(counts.get(&String::from_slice(&env, "Repaid")).unwrap(), &0u64);
+    assert_eq!(counts.get(&String::from_slice(&env, "Defaulted")).unwrap(), &0u64);
+    assert_eq!(counts.get(&String::from_slice(&env, "Expired")).unwrap(), &0u64);
+
+    client.list_for_financing(&invoice_id, &200);
+    let counts = client.get_counts();
+    assert_eq!(counts.get(&String::from_slice(&env, "Created")).unwrap(), &0u64);
+    assert_eq!(counts.get(&String::from_slice(&env, "Listed")).unwrap(), &1u64);
+
+    let pool = mock_pool_with_asset(&env, &usdc);
+    client.set_pool_contract(&pool);
+    client.mark_funded(&invoice_id, &pool, &usdc, &980_000_000);
+    let counts = client.get_counts();
+    assert_eq!(counts.get(&String::from_slice(&env, "Listed")).unwrap(), &0u64);
+    assert_eq!(counts.get(&String::from_slice(&env, "Funded")).unwrap(), &1u64);
+
+    client.mark_shipped(&invoice_id);
+    let counts = client.get_counts();
+    assert_eq!(counts.get(&String::from_slice(&env, "Funded")).unwrap(), &0u64);
+    assert_eq!(counts.get(&String::from_slice(&env, "Active")).unwrap(), &1u64);
+
+    client.confirm_delivery(&invoice_id, &issuer);
+    client.confirm_delivery(&invoice_id, &buyer);
+    let counts = client.get_counts();
+    assert_eq!(counts.get(&String::from_slice(&env, "Active")).unwrap(), &0u64);
+    assert_eq!(counts.get(&String::from_slice(&env, "Confirmed")).unwrap(), &1u64);
+
+    client.repay(&invoice_id);
+    let counts = client.get_counts();
+    assert_eq!(counts.get(&String::from_slice(&env, "Confirmed")).unwrap(), &0u64);
+    assert_eq!(counts.get(&String::from_slice(&env, "Repaid")).unwrap(), &1u64);
+}
     env.ledger()
         .set_timestamp(env.ledger().timestamp() + 86400 + 1);
 
