@@ -97,7 +97,12 @@ impl EscrowContract {
             &(record.amount as i128),
         );
 
-        Self::append_history(&env, &invoice_id, EscrowAction::ReleasedToIssuer, record.amount);
+        Self::append_history(
+            &env,
+            &invoice_id,
+            EscrowAction::ReleasedToIssuer,
+            record.amount,
+        );
         env.storage().persistent().remove(&key);
         Self::extend_instance_ttl(&env);
         events::released_to_issuer(&env, &invoice_id, &issuer, record.amount);
@@ -131,7 +136,12 @@ impl EscrowContract {
             &(repayment_amount as i128),
         );
 
-        Self::append_history(&env, &invoice_id, EscrowAction::ReleasedToPool, repayment_amount);
+        Self::append_history(
+            &env,
+            &invoice_id,
+            EscrowAction::ReleasedToPool,
+            repayment_amount,
+        );
         env.storage().persistent().remove(&key);
         Self::extend_instance_ttl(&env);
         events::released_to_pool(&env, &invoice_id, &pool, repayment_amount);
@@ -165,7 +175,12 @@ impl EscrowContract {
             &(record.amount as i128),
         );
 
-        Self::append_history(&env, &invoice_id, EscrowAction::DefaultHandled, record.amount);
+        Self::append_history(
+            &env,
+            &invoice_id,
+            EscrowAction::DefaultHandled,
+            record.amount,
+        );
         env.storage().persistent().remove(&key);
         Self::extend_instance_ttl(&env);
         events::default_resolved(&env, &invoice_id, &pool, record.amount);
@@ -190,7 +205,11 @@ impl EscrowContract {
 
     fn append_history(env: &Env, invoice_id: &BytesN<32>, action: EscrowAction, amount: u128) {
         let key = DataKey::History(invoice_id.clone());
-        let mut history: Vec<EscrowEvent> = env.storage().persistent().get(&key).unwrap_or(Vec::new(env));
+        let mut history: Vec<EscrowEvent> = env
+            .storage()
+            .persistent()
+            .get(&key)
+            .unwrap_or(Vec::new(env));
         history.push_back(EscrowEvent {
             invoice_id: invoice_id.clone(),
             action,
