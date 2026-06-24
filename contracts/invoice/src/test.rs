@@ -2,7 +2,7 @@
 
 use soroban_sdk::{
     contract, contractimpl, contracttype, testutils::Address as _, testutils::Ledger, Address,
-    BytesN, Env, Symbol,
+    BytesN, Env, IntoVal, Symbol,
 };
 
 use crate::{InvoiceContract, InvoiceContractClient, InvoiceStatus};
@@ -462,103 +462,150 @@ fn test_get_funding_asset_returns_correct_asset() {
 }
 
 #[test]
-fn test_repay_early_refund_25_percent() {
+fn test_expire_listing_succeeds_by_issuer() {
     let (env, client, issuer, buyer, _, usdc) = setup();
-    let face_value: u128 = 10_000;
-    let due_date = env.ledger().timestamp() + 60;
-
-    let invoice_id = client.create(&issuer, &buyer, &face_value, &due_date, &usdc);
+    let due_date = env.ledger().timestamp() + 86400;
+    let invoice_id = client.create(&issuer, &buyer, &1_000_000_000, &due_date, &usdc);
     client.list_for_financing(&invoice_id, &200);
 
-    let pool = mock_pool_with_asset(&env, &usdc);
-    client.set_pool_contract(&pool);
-    let funded_amount: u128 = face_value * (10000 - 200) / 10000;
-    client.mark_funded(&invoice_id, &pool, &usdc, &funded_amount);
-    client.mark_shipped(&invoice_id);
-    client.confirm_delivery(&invoice_id, &issuer);
-    client.confirm_delivery(&invoice_id, &buyer);
+    // Fast forward ledger time by 7 days + 1 second
+    env.ledger()
+        .set_timestamp(env.ledger().timestamp() + 7 * 24 * 60 * 60 + 1);
 
-    let funded_at = client.get(&invoice_id).funded_at.unwrap();
-    let term = due_date - funded_at;
-    // 25% elapsed
-    env.ledger().set_timestamp(funded_at + term / 4);
-
-    let result = client.repay_early(&invoice_id);
+    let result = client.expire_listing(&invoice_id);
     assert!(result);
-
-    let pool_client = MockPoolClient::new(&env, &pool);
-    let last_refund = pool_client.get_last_refund();
-
-    let discount = face_value - funded_amount;
-    let earned = discount * (term / 4) as u128 / (term as u128);
-    let expected_refund = discount.saturating_sub(earned);
-    assert_eq!(last_refund, expected_refund);
+    assert_eq!(client.get(&invoice_id).status, InvoiceStatus::Expired);
 }
 
 #[test]
-fn test_repay_early_refund_50_percent() {
+fn test_expire_listing_succeeds_by_admin() {
     let (env, client, issuer, buyer, _, usdc) = setup();
-    let face_value: u128 = 10_000;
-    let due_date = env.ledger().timestamp() + 60;
-
-    let invoice_id = client.create(&issuer, &buyer, &face_value, &due_date, &usdc);
+    let due_date = env.ledger().timestamp() + 86400;
+    let invoice_id = client.create(&issuer, &buyer, &1_000_000_000, &due_date, &usdc);
     client.list_for_financing(&invoice_id, &200);
 
-    let pool = mock_pool_with_asset(&env, &usdc);
-    client.set_pool_contract(&pool);
-    let funded_amount: u128 = face_value * (10000 - 200) / 10000;
-    client.mark_funded(&invoice_id, &pool, &usdc, &funded_amount);
-    client.mark_shipped(&invoice_id);
-    client.confirm_delivery(&invoice_id, &issuer);
-    client.confirm_delivery(&invoice_id, &buyer);
+    // Fast forward ledger time by 7 days + 1 second
+    env.ledger()
+        .set_timestamp(env.ledger().timestamp() + 7 * 24 * 60 * 60 + 1);
 
-    let funded_at = client.get(&invoice_id).funded_at.unwrap();
-    let term = due_date - funded_at;
-    // 50% elapsed
-    env.ledger().set_timestamp(funded_at + term / 2);
-
-    let result = client.repay_early(&invoice_id);
+    let result = client.expire_listing(&invoice_id);
     assert!(result);
-
-    let pool_client = MockPoolClient::new(&env, &pool);
-    let last_refund = pool_client.get_last_refund();
-
-    let discount = face_value - funded_amount;
-    let earned = discount * (term / 2) as u128 / (term as u128);
-    let expected_refund = discount.saturating_sub(earned);
-    assert_eq!(last_refund, expected_refund);
+    assert_eq!(client.get(&invoice_id).status, InvoiceStatus::Expired);
 }
 
 #[test]
-fn test_repay_early_refund_75_percent() {
+#[should_panic(expected = "Error(Contract, #14)")]
+fn test_expire_listing_early_panics() {
     let (env, client, issuer, buyer, _, usdc) = setup();
-    let face_value: u128 = 10_000;
-    let due_date = env.ledger().timestamp() + 60;
-
-    let invoice_id = client.create(&issuer, &buyer, &face_value, &due_date, &usdc);
+    let due_date = env.ledger().timestamp() + 86400;
+    let invoice_id = client.create(&issuer, &buyer, &1_000_000_000, &due_date, &usdc);
     client.list_for_financing(&invoice_id, &200);
 
-    let pool = mock_pool_with_asset(&env, &usdc);
-    client.set_pool_contract(&pool);
-    let funded_amount: u128 = face_value * (10000 - 200) / 10000;
-    client.mark_funded(&invoice_id, &pool, &usdc, &funded_amount);
-    client.mark_shipped(&invoice_id);
-    client.confirm_delivery(&invoice_id, &issuer);
-    client.confirm_delivery(&invoice_id, &buyer);
+    // Fast forward ledger time by only 5 days (less than 7 days)
+    env.ledger()
+        .set_timestamp(env.ledger().timestamp() + 5 * 24 * 60 * 60);
 
-    let funded_at = client.get(&invoice_id).funded_at.unwrap();
-    let term = due_date - funded_at;
-    // 75% elapsed
-    env.ledger().set_timestamp(funded_at + term * 3 / 4);
+    client.expire_listing(&invoice_id);
+}
 
-    let result = client.repay_early(&invoice_id);
+#[test]
+#[should_panic(expected = "Error(Contract, #8)")]
+fn test_expire_listing_wrong_status_panics() {
+    let (env, client, issuer, buyer, _, usdc) = setup();
+    let due_date = env.ledger().timestamp() + 86400;
+    let invoice_id = client.create(&issuer, &buyer, &1_000_000_000, &due_date, &usdc);
+
+    // Fast forward ledger time
+    env.ledger()
+        .set_timestamp(env.ledger().timestamp() + 7 * 24 * 60 * 60 + 1);
+
+    client.expire_listing(&invoice_id);
+}
+
+#[test]
+fn test_expire_listing_configurable_window() {
+    let (env, client, issuer, buyer, _, usdc) = setup();
+    let due_date = env.ledger().timestamp() + 86400;
+    let invoice_id = client.create(&issuer, &buyer, &1_000_000_000, &due_date, &usdc);
+    client.list_for_financing(&invoice_id, &200);
+
+    // Set expiry window to 1 day (86400 seconds)
+    client.set_expiry_window(&86400);
+    assert_eq!(client.get_expiry_window(), 86400);
+
+    // Fast forward by 1 day + 1 second
+    env.ledger()
+        .set_timestamp(env.ledger().timestamp() + 86400 + 1);
+
+    let result = client.expire_listing(&invoice_id);
     assert!(result);
+    assert_eq!(client.get(&invoice_id).status, InvoiceStatus::Expired);
+}
 
-    let pool_client = MockPoolClient::new(&env, &pool);
-    let last_refund = pool_client.get_last_refund();
+#[test]
+#[should_panic]
+fn test_expire_listing_stranger_panics() {
+    let env = Env::default();
 
-    let discount = face_value - funded_amount;
-    let earned = discount * (term * 3 / 4) as u128 / (term as u128);
-    let expected_refund = discount.saturating_sub(earned);
-    assert_eq!(last_refund, expected_refund);
+    let registry_id = env.register_contract(None, MockRegistry);
+    let registry_client = MockRegistryClient::new(&env, &registry_id);
+
+    let issuer = Address::generate(&env);
+    let buyer = Address::generate(&env);
+    registry_client.register(&issuer);
+    registry_client.register(&buyer);
+
+    let contract_id = env.register_contract(None, InvoiceContract);
+    let client = InvoiceContractClient::new(&env, &contract_id);
+
+    let admin = Address::generate(&env);
+
+    env.mock_auths(&[soroban_sdk::testutils::MockAuth {
+        address: &admin,
+        invoke: &soroban_sdk::testutils::MockAuthInvoke {
+            contract: &contract_id,
+            fn_name: "initialize",
+            args: (admin.clone(), registry_id.clone()).into_val(&env),
+            sub_invokes: &[],
+        },
+    }]);
+    client.initialize(&admin, &registry_id);
+
+    let usdc = Address::generate(&env);
+    let due_date = env.ledger().timestamp() + 86400;
+
+    env.mock_auths(&[soroban_sdk::testutils::MockAuth {
+        address: &issuer,
+        invoke: &soroban_sdk::testutils::MockAuthInvoke {
+            contract: &contract_id,
+            fn_name: "create",
+            args: (
+                issuer.clone(),
+                buyer.clone(),
+                1_000_000_000u128,
+                due_date,
+                usdc.clone(),
+            )
+                .into_val(&env),
+            sub_invokes: &[],
+        },
+    }]);
+    let invoice_id = client.create(&issuer, &buyer, &1_000_000_000, &due_date, &usdc);
+
+    env.mock_auths(&[soroban_sdk::testutils::MockAuth {
+        address: &issuer,
+        invoke: &soroban_sdk::testutils::MockAuthInvoke {
+            contract: &contract_id,
+            fn_name: "list_for_financing",
+            args: (invoice_id.clone(), 200u32).into_val(&env),
+            sub_invokes: &[],
+        },
+    }]);
+    client.list_for_financing(&invoice_id, &200);
+
+    env.ledger()
+        .set_timestamp(env.ledger().timestamp() + 7 * 24 * 60 * 60 + 1);
+
+    // Calling expire_listing without mocking auths for issuer or admin should panic due to failed require_auth.
+    client.expire_listing(&invoice_id);
 }

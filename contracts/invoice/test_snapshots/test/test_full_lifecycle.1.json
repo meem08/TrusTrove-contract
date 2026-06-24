@@ -644,6 +644,14 @@
                     },
                     {
                       "key": {
+                        "symbol": "listed_at"
+                      },
+                      "val": {
+                        "u64": 0
+                      }
+                    },
+                    {
+                      "key": {
                         "symbol": "repaid_at"
                       },
                       "val": "void"
@@ -1781,6 +1789,12 @@
                 },
                 {
                   "key": {
+                    "symbol": "listed_at"
+                  },
+                  "val": "void"
+                },
+                {
+                  "key": {
                     "symbol": "repaid_at"
                   },
                   "val": "void"
@@ -2036,6 +2050,14 @@
                   },
                   "val": {
                     "bool": false
+                  }
+                },
+                {
+                  "key": {
+                    "symbol": "listed_at"
+                  },
+                  "val": {
+                    "u64": 0
                   }
                 },
                 {
@@ -2362,6 +2384,14 @@
                 },
                 {
                   "key": {
+                    "symbol": "listed_at"
+                  },
+                  "val": {
+                    "u64": 0
+                  }
+                },
+                {
+                  "key": {
                     "symbol": "repaid_at"
                   },
                   "val": "void"
@@ -2542,6 +2572,14 @@
                   },
                   "val": {
                     "bool": false
+                  }
+                },
+                {
+                  "key": {
+                    "symbol": "listed_at"
+                  },
+                  "val": {
+                    "u64": 0
                   }
                 },
                 {
@@ -2796,6 +2834,14 @@
                   },
                   "val": {
                     "bool": false
+                  }
+                },
+                {
+                  "key": {
+                    "symbol": "listed_at"
+                  },
+                  "val": {
+                    "u64": 0
                   }
                 },
                 {
@@ -3066,6 +3112,14 @@
                 },
                 {
                   "key": {
+                    "symbol": "listed_at"
+                  },
+                  "val": {
+                    "u64": 0
+                  }
+                },
+                {
+                  "key": {
                     "symbol": "repaid_at"
                   },
                   "val": "void"
@@ -3252,6 +3306,14 @@
                 },
                 {
                   "key": {
+                    "symbol": "listed_at"
+                  },
+                  "val": {
+                    "u64": 0
+                  }
+                },
+                {
+                  "key": {
                     "symbol": "repaid_at"
                   },
                   "val": "void"
@@ -3434,6 +3496,14 @@
                   },
                   "val": {
                     "bool": true
+                  }
+                },
+                {
+                  "key": {
+                    "symbol": "listed_at"
+                  },
+                  "val": {
+                    "u64": 0
                   }
                 },
                 {
@@ -3725,6 +3795,14 @@
                 },
                 {
                   "key": {
+                    "symbol": "listed_at"
+                  },
+                  "val": {
+                    "u64": 0
+                  }
+                },
+                {
+                  "key": {
                     "symbol": "repaid_at"
                   },
                   "val": "void"
@@ -3911,6 +3989,14 @@
                 },
                 {
                   "key": {
+                    "symbol": "listed_at"
+                  },
+                  "val": {
+                    "u64": 0
+                  }
+                },
+                {
+                  "key": {
                     "symbol": "repaid_at"
                   },
                   "val": "void"
@@ -4093,6 +4179,14 @@
                   },
                   "val": {
                     "bool": true
+                  }
+                },
+                {
+                  "key": {
+                    "symbol": "listed_at"
+                  },
+                  "val": {
+                    "u64": 0
                   }
                 },
                 {
