@@ -232,13 +232,13 @@ fn test_verify_profile_updates_status() {
     client.initialize(&admin);
     let issuer = Address::generate(&env);
     client.register_issuer(&issuer, &map![&env]);
-    
+
     assert!(client.is_verified(&issuer));
-    
+
     // Revoke
     client.revoke(&issuer);
     assert!(!client.is_verified(&issuer));
-    
+
     // Re-verify
     let result = client.verify_profile(&issuer, &true);
     assert!(result);

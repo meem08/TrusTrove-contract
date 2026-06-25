@@ -16,6 +16,8 @@ pub fn address_revoked(env: &Env, address: &Address) {
 }
 
 pub fn profile_verified(env: &Env, address: &Address, status: bool) {
-    env.events()
-        .publish((Symbol::new(env, "profile_verified"), address.clone()), status);
+    env.events().publish(
+        (Symbol::new(env, "profile_verified"), address.clone()),
+        status,
+    );
 }
