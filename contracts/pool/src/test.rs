@@ -70,6 +70,7 @@ struct TestEnv {
     invoice: RealInvoiceClient<'static>,
     usdc_id: Address,
     xlm_id: Address,
+    admin: Address,
     issuer: Address,
     buyer: Address,
     lp: Address,
@@ -130,12 +131,16 @@ fn setup() -> TestEnv {
 
     invoice.set_pool_contract(&pool_id);
 
+    // Raise cap to 100% so existing tests (which fund at 98% utilization) still pass
+    pool.set_max_utilization(&admin, &10000);
+
     TestEnv {
         env,
         pool,
         invoice,
         usdc_id,
         xlm_id,
+        admin,
         issuer,
         buyer,
         lp,
@@ -376,9 +381,86 @@ fn test_utilization_rate_after_funding() {
 fn test_utilization_rate_calculates_correctly() {
     let te = setup();
     te.pool.deposit(&te.lp, &10_000_000_000);
+    // Raise cap to 100% so funding doesn't get rejected
+    te.pool.set_max_utilization(&te.admin, &10000);
     let invoice_id = create_and_list(&te, &te.usdc_id);
     let _ = te.pool.fund_invoice(&invoice_id);
     assert_eq!(te.pool.get_utilization_rate(), 9800);
+}
+
+// ============== MAX UTILIZATION TESTS ==============
+
+#[test]
+fn test_default_max_utilization_in_stats() {
+    // Fresh pool without setup override to verify initialize default is 8500
+    let env = Env::default();
+    env.mock_all_auths();
+    let admin = Address::generate(&env);
+    let registry_id = env.register_contract(None, MockRegistry);
+    let invoice_id = env.register_contract(None, RealInvoice);
+    let escrow_id = env.register_contract(None, RealEscrow);
+    let usdc_id = env.register_contract(None, MockToken);
+    RealInvoiceClient::new(&env, &invoice_id).initialize(&admin, &registry_id);
+    let pool_id = env.register_contract(None, PoolContract);
+    let pool = PoolContractClient::new(&env, &pool_id);
+    pool.initialize(&admin, &invoice_id, &escrow_id, &usdc_id);
+    RealEscrowClient::new(&env, &escrow_id).initialize(&admin, &pool_id, &invoice_id, &usdc_id);
+    let stats = pool.get_stats();
+    assert_eq!(stats.max_utilization_bps, 8500);
+}
+
+#[test]
+fn test_updated_max_utilization_reflected_in_stats() {
+    let te = setup();
+    te.pool.set_max_utilization(&te.admin, &9000);
+    let stats = te.pool.get_stats();
+    assert_eq!(stats.max_utilization_bps, 9000);
+}
+
+#[test]
+#[should_panic(expected = "Error(Contract, #12)")]
+fn test_fund_invoice_rejects_above_cap() {
+    let te = setup();
+    // Restore cap to 8500; funding at 9800 utilization should fail
+    te.pool.set_max_utilization(&te.admin, &8500);
+    te.pool.deposit(&te.lp, &10_000_000_000);
+    let invoice_id = create_and_list(&te, &te.usdc_id);
+    te.pool.fund_invoice(&invoice_id);
+}
+
+#[test]
+fn test_fund_invoice_allowed_when_below_cap() {
+    let te = setup();
+    te.pool.set_max_utilization(&te.admin, &10000);
+    te.pool.deposit(&te.lp, &10_000_000_000);
+    let invoice_id = create_and_list(&te, &te.usdc_id);
+    let result = te.pool.fund_invoice(&invoice_id);
+    assert!(result);
+}
+
+#[test]
+#[should_panic(expected = "Error(Contract, #4)")]
+fn test_set_max_utilization_above_10000_panics() {
+    let te = setup();
+    te.pool.set_max_utilization(&te.admin, &10001);
+}
+
+#[test]
+#[should_panic(expected = "Error(Contract, #12)")]
+fn test_reducing_cap_mid_lifecycle_blocks_new_funding() {
+    let te = setup();
+    te.pool.set_max_utilization(&te.admin, &8500);
+    te.pool.deposit(&te.lp, &100_000_000_000);
+    // First funding: 9_800_000_000 / 100_000_000_000 = 980 bps < 8500 → ok
+    let invoice_id = create_and_list(&te, &te.usdc_id);
+    te.pool.fund_invoice(&invoice_id);
+
+    // Lower cap below the utilization a second funding would cause
+    // (980 bps already used; adding another 9.8B → 1960 bps)
+    te.pool.set_max_utilization(&te.admin, &1000);
+    // Second funding should push utilization to 1960 bps > 1000 → rejected
+    let invoice_id2 = create_and_list(&te, &te.usdc_id);
+    te.pool.fund_invoice(&invoice_id2);
 }
 
 #[test]

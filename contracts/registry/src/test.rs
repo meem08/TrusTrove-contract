@@ -1,6 +1,6 @@
 #![cfg(test)]
 
-use crate::{RegistryContract, RegistryContractClient};
+use crate::{DataKey, Profile, RegistryContract, RegistryContractClient, Role};
 use soroban_sdk::{map, testutils::Address as _, vec, Address, Env, String, Vec};
 
 fn setup() -> (Env, RegistryContractClient<'static>) {
@@ -83,6 +83,88 @@ fn test_revoke_sets_verified_false() {
     let result = client.revoke(&issuer);
     assert!(result);
     assert!(!client.is_verified(&issuer));
+}
+
+#[test]
+fn test_update_metadata_self_succeeds() {
+    let (env, client) = setup();
+    let admin = Address::generate(&env);
+    client.initialize(&admin);
+    let issuer = Address::generate(&env);
+    let metadata = map![
+        &env,
+        (
+            String::from_str(&env, "name"),
+            String::from_str(&env, "Acme Corp"),
+        )
+    ];
+    client.register_issuer(&issuer, &metadata);
+
+    let updated_metadata = map![
+        &env,
+        (
+            String::from_str(&env, "name"),
+            String::from_str(&env, "Acme LLC"),
+        )
+    ];
+    let result = client.update_metadata(&issuer, &updated_metadata);
+    assert!(result);
+
+    let profile = client.get_profile(&issuer);
+    assert_eq!(profile.metadata, updated_metadata);
+}
+
+#[test]
+#[should_panic(expected = "Error(Contract, #3)")]
+fn test_update_metadata_unregistered_panics() {
+    let (env, client) = setup();
+    let admin = Address::generate(&env);
+    client.initialize(&admin);
+    let unknown = Address::generate(&env);
+    let metadata = map![&env];
+    client.update_metadata(&unknown, &metadata);
+}
+
+#[test]
+#[should_panic(expected = "Error(Auth, InvalidAction)")]
+fn test_update_metadata_wrong_auth_panics() {
+    let env = Env::default();
+    let contract_id = env.register_contract(None, RegistryContract);
+    let client = RegistryContractClient::new(&env, &contract_id);
+
+    let issuer = Address::generate(&env);
+    let metadata = map![
+        &env,
+        (
+            String::from_str(&env, "name"),
+            String::from_str(&env, "Acme Corp"),
+        )
+    ];
+    let profile = Profile {
+        address: issuer.clone(),
+        role: Role::Issuer,
+        verified: true,
+        registered_at: env.ledger().timestamp(),
+        metadata,
+    };
+
+    env.as_contract(&contract_id, || {
+        env.storage()
+            .persistent()
+            .set(&DataKey::Profile(issuer.clone()), &profile);
+        env.storage()
+            .persistent()
+            .extend_ttl(&DataKey::Profile(issuer.clone()), 100, 2_000_000);
+    });
+
+    let updated_metadata = map![
+        &env,
+        (
+            String::from_str(&env, "name"),
+            String::from_str(&env, "Bad Actor"),
+        )
+    ];
+    client.update_metadata(&issuer, &updated_metadata);
 }
 
 #[test]

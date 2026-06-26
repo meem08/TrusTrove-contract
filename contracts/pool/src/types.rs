@@ -10,6 +10,7 @@ pub struct PoolStats {
     pub total_yield_distributed: u128,
     pub active_invoice_count: u32,
     pub total_shares: u128,
+    pub max_utilization_bps: u32,
 }
 
 #[contracttype]
@@ -37,4 +38,5 @@ pub enum DataKey {
     LPYieldEarned(Address),
     LPInitialDeposit(Address),
     FundedInvoice(BytesN<32>),
+    MaxUtilizationBps,
 }
