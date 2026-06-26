@@ -122,6 +122,8 @@ fn setup() -> TestEnv {
 
     let invoice = RealInvoiceClient::new(&env, &invoice_id);
     invoice.initialize(&admin, &registry_id);
+    invoice.add_supported_asset(&usdc_id);
+    invoice.add_supported_asset(&xlm_id);
 
     let pool = PoolContractClient::new(&env, &pool_id);
     pool.initialize(&admin, &invoice_id, &escrow_id, &usdc_id);
