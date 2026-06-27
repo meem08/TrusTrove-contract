@@ -780,24 +780,31 @@ impl InvoiceContract {
     }
 
     pub fn get_by_status(env: Env, status: InvoiceStatus) -> Vec<Invoice> {
+        let status_u32 = status as u32;
         let count: u32 = env
             .storage()
             .persistent()
-            .get(&DataKey::StatusIndexCount(status as u32))
+            .get(&DataKey::StatusIndexCount(status_u32))
             .unwrap_or(0);
         let mut result: Vec<Invoice> = Vec::new(&env);
         for i in 0..count {
             let id: BytesN<32> = env
                 .storage()
                 .persistent()
-                .get(&DataKey::StatusIndexEntry(status as u32, i))
+                .get(&DataKey::StatusIndexEntry(status_u32, i))
                 .unwrap();
-            let invoice: Invoice = env
+            // O(1) membership check instead of loading full invoice
+            let is_member: bool = env
                 .storage()
                 .persistent()
-                .get(&DataKey::Invoice(id))
-                .unwrap();
-            if invoice.status == status {
+                .get(&DataKey::StatusMembership(status_u32, id.clone()))
+                .unwrap_or(false);
+            if is_member {
+                let invoice: Invoice = env
+                    .storage()
+                    .persistent()
+                    .get(&DataKey::Invoice(id))
+                    .unwrap();
                 result.push_back(invoice);
             }
         }
@@ -959,6 +966,15 @@ fn extend_buyer_index(env: &Env, buyer: &Address, invoice_id: &BytesN<32>) {
 
 fn extend_status_index(env: &Env, status: InvoiceStatus, invoice_id: &BytesN<32>) {
     let status_u32 = status as u32;
+    
+    // Set membership marker for O(1) lookups
+    let membership_key = DataKey::StatusMembership(status_u32, invoice_id.clone());
+    env.storage().persistent().set(&membership_key, &true);
+    env.storage()
+        .persistent()
+        .extend_ttl(&membership_key, 100, 2_000_000);
+    
+    // Increment count
     let count_key = DataKey::StatusIndexCount(status_u32);
     let count: u32 = env.storage().persistent().get(&count_key).unwrap_or(0);
     let entry_key = DataKey::StatusIndexEntry(status_u32, count);
@@ -972,7 +988,14 @@ fn extend_status_index(env: &Env, status: InvoiceStatus, invoice_id: &BytesN<32>
         .extend_ttl(&count_key, 100, 2_000_000);
 }
 
-fn move_status_index(env: &Env, invoice_id: &BytesN<32>, _from: InvoiceStatus, to: InvoiceStatus) {
+fn move_status_index(env: &Env, invoice_id: &BytesN<32>, from: InvoiceStatus, to: InvoiceStatus) {
+    let from_u32 = from as u32;
+    
+    // Remove from old status - O(1) operation
+    let membership_key = DataKey::StatusMembership(from_u32, invoice_id.clone());
+    env.storage().persistent().remove(&membership_key);
+    
+    // Add to new status - O(1) operation
     extend_status_index(env, to, invoice_id);
 }
 
