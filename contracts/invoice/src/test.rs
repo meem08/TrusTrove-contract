@@ -403,7 +403,10 @@ fn test_move_status_index_efficient_with_many_invoices() {
         );
     }
 
-    assert_eq!(client.get_by_status(&InvoiceStatus::Created).len(), N as usize);
+    assert_eq!(
+        client.get_by_status(&InvoiceStatus::Created).len(),
+        N as usize
+    );
 
     // O(1) status move: cost does not depend on bucket size
     client.list_for_financing(&first_id, &200);
