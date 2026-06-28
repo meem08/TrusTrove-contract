@@ -192,7 +192,7 @@ impl EscrowContract {
             .get(&key)
             .unwrap_or_else(|| panic_with_error!(&env, EscrowError::NotFound));
 
-        if repayment_amount != record.amount {
+        if repayment_amount == 0 || repayment_amount > record.amount {
             panic_with_error!(&env, EscrowError::InvalidAmount);
         }
 
@@ -204,13 +204,21 @@ impl EscrowContract {
             &(repayment_amount as i128),
         );
 
+        let remaining_amount = record.amount - repayment_amount;
+        let mut updated_record = record.clone();
+        if remaining_amount == 0 {
+            env.storage().persistent().remove(&key);
+        } else {
+            updated_record.amount = remaining_amount;
+            persistent_set(&env, &key, &updated_record);
+        }
+
         Self::append_history(
             &env,
             &invoice_id,
             EscrowAction::ReleasedToPool,
             repayment_amount,
         );
-        env.storage().persistent().remove(&key);
         events::released_to_pool(&env, &invoice_id, &pool, repayment_amount);
         true
     }
