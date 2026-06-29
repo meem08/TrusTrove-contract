@@ -570,13 +570,6 @@ fn test_get_counts_updates_through_lifecycle() {
     assert_eq!(counts.get(&String::from_slice(&env, "Confirmed")).unwrap(), &0u64);
     assert_eq!(counts.get(&String::from_slice(&env, "Repaid")).unwrap(), &1u64);
 }
-    env.ledger()
-        .set_timestamp(env.ledger().timestamp() + 86400 + 1);
-
-    let result = client.expire_listing(&invoice_id);
-    assert!(result);
-    assert_eq!(client.get(&invoice_id).status, InvoiceStatus::Expired);
-}
 
 #[test]
 #[should_panic]
@@ -642,52 +635,5 @@ fn test_expire_listing_stranger_panics() {
     env.ledger()
         .set_timestamp(env.ledger().timestamp() + 7 * 24 * 60 * 60 + 1);
 
-    // Calling expire_listing without mocking auths for issuer or admin should panic due to failed require_auth.
     client.expire_listing(&invoice_id);
-}
-
-#[test]
-fn test_get_counts_updates_through_lifecycle() {
-    let (env, client, issuer, buyer, _, usdc) = setup();
-    let due_date = env.ledger().timestamp() + 86400;
-    let invoice_id = client.create(&issuer, &buyer, &1_000_000_000, &due_date, &usdc);
-
-    let counts = client.get_counts();
-    assert_eq!(counts.len(), 8);
-    assert_eq!(counts.get(&String::from_slice(&env, "Created")).unwrap(), &1u64);
-    assert_eq!(counts.get(&String::from_slice(&env, "Listed")).unwrap(), &0u64);
-    assert_eq!(counts.get(&String::from_slice(&env, "Funded")).unwrap(), &0u64);
-    assert_eq!(counts.get(&String::from_slice(&env, "Active")).unwrap(), &0u64);
-    assert_eq!(counts.get(&String::from_slice(&env, "Confirmed")).unwrap(), &0u64);
-    assert_eq!(counts.get(&String::from_slice(&env, "Repaid")).unwrap(), &0u64);
-    assert_eq!(counts.get(&String::from_slice(&env, "Defaulted")).unwrap(), &0u64);
-    assert_eq!(counts.get(&String::from_slice(&env, "Expired")).unwrap(), &0u64);
-
-    client.list_for_financing(&invoice_id, &200);
-    let counts = client.get_counts();
-    assert_eq!(counts.get(&String::from_slice(&env, "Created")).unwrap(), &0u64);
-    assert_eq!(counts.get(&String::from_slice(&env, "Listed")).unwrap(), &1u64);
-
-    let pool = mock_pool_with_asset(&env, &usdc);
-    client.set_pool_contract(&pool);
-    client.mark_funded(&invoice_id, &pool, &usdc, &980_000_000);
-    let counts = client.get_counts();
-    assert_eq!(counts.get(&String::from_slice(&env, "Listed")).unwrap(), &0u64);
-    assert_eq!(counts.get(&String::from_slice(&env, "Funded")).unwrap(), &1u64);
-
-    client.mark_shipped(&invoice_id);
-    let counts = client.get_counts();
-    assert_eq!(counts.get(&String::from_slice(&env, "Funded")).unwrap(), &0u64);
-    assert_eq!(counts.get(&String::from_slice(&env, "Active")).unwrap(), &1u64);
-
-    client.confirm_delivery(&invoice_id, &issuer);
-    client.confirm_delivery(&invoice_id, &buyer);
-    let counts = client.get_counts();
-    assert_eq!(counts.get(&String::from_slice(&env, "Active")).unwrap(), &0u64);
-    assert_eq!(counts.get(&String::from_slice(&env, "Confirmed")).unwrap(), &1u64);
-
-    client.repay(&invoice_id);
-    let counts = client.get_counts();
-    assert_eq!(counts.get(&String::from_slice(&env, "Confirmed")).unwrap(), &0u64);
-    assert_eq!(counts.get(&String::from_slice(&env, "Repaid")).unwrap(), &1u64);
 }

@@ -415,7 +415,7 @@ impl InvoiceContract {
             .unwrap_or_else(|| panic_with_error!(&env, InvoiceError::NotFound));
         admin.require_auth();
         env.storage().instance().set(&DataKey::ExpiryWindow, &window);
-        extend_instance_ttl(&env);
+        Self::extend_instance_ttl(&env);
     }
 
     pub fn get_expiry_window(env: Env) -> u64 {
@@ -609,82 +609,16 @@ impl InvoiceContract {
         }
         counts
     }
-}
 
-pub fn set_expiry_window(env: Env, window: u64) {
-    let admin: Address = env
-        .storage()
-        .instance()
-        .get(&DataKey::Admin)
-        .unwrap_or_else(|| panic_with_error!(&env, InvoiceError::NotFound));
-    admin.require_auth();
-    env.storage()
-        .instance()
-        .set(&DataKey::ExpiryWindow, &window);
-    Self::extend_instance_ttl(&env);
-}
-
-pub fn get_expiry_window(env: Env) -> u64 {
-    env.storage()
-        .instance()
-        .get(&DataKey::ExpiryWindow)
-        .unwrap_or(7 * 24 * 60 * 60)
-}
-
-pub fn check_auth(_env: Env, address: Address) {
-    address.require_auth();
-}
-
-pub fn expire_listing(env: Env, invoice_id: BytesN<32>) -> bool {
-    let inv_key = DataKey::Invoice(invoice_id.clone());
-    let mut invoice: Invoice = env
-        .storage()
-        .persistent()
-        .get(&inv_key)
-        .unwrap_or_else(|| panic_with_error!(&env, InvoiceError::NotFound));
-
-    if invoice.status != InvoiceStatus::Listed {
-        panic_with_error!(&env, InvoiceError::InvalidStatusTransition);
+    fn extend_instance_ttl(env: &Env) {
+        env.storage().instance().extend_ttl(100, 2_000_000);
     }
+}
 
-    let admin: Address = env
-        .storage()
-        .instance()
-        .get(&DataKey::Admin)
-        .unwrap_or_else(|| panic_with_error!(&env, InvoiceError::NotFound));
-
-    let is_issuer = env
-        .try_invoke_contract::<(), soroban_sdk::Error>(
-            &env.current_contract_address(),
-            &Symbol::new(&env, "check_auth"),
-            (invoice.issuer.clone(),).into_val(&env),
-        )
-        .is_ok();
-
-    if !is_issuer {
-        admin.require_auth();
-    }
-
-    let listed_at = invoice.listed_at.unwrap_or(0);
-    let expiry_window = env
-        .storage()
-        .instance()
-        .get(&DataKey::ExpiryWindow)
-        .unwrap_or(7 * 24 * 60 * 60);
-
-    let current_time = env.ledger().timestamp();
-    if current_time <= listed_at + expiry_window {
-        panic_with_error!(&env, InvoiceError::ListingNotExpired);
-    }
-
-    let prev_status = invoice.status;
-    invoice.status = InvoiceStatus::Expired;
-    env.storage().persistent().set(&inv_key, &invoice);
-    env.storage().persistent().extend_ttl(&inv_key, 100, 2_000_000);
-
-    self::move_status_index(&env, &invoice_id, prev_status, InvoiceStatus::Expired);
-    events::invoice_expired(&env, &invoice_id);
-    true
+fn move_status_index(env: &Env, invoice_id: &BytesN<32>, from: InvoiceStatus, to: InvoiceStatus) {
+    decrement_status_count(env, from);
+    increment_status_count(env, to);
+    extend_status_index(env, to, invoice_id);
 }
 
 fn extend_issuer_index(env: &Env, issuer: &Address, invoice_id: &BytesN<32>) {
@@ -742,26 +676,3 @@ fn read_status_count(env: &Env, status: InvoiceStatus) -> u64 {
         .unwrap_or(0u64)
 }
 
-fn increment_status_count(env: &Env, status: InvoiceStatus) {
-    let key = DataKey::StatusCount(status as u32);
-    let current: u64 = env.storage().persistent().get(&key).unwrap_or(0u64);
-    env.storage().persistent().set(&key, &(current + 1));
-    env.storage().persistent().extend_ttl(&key, 100, 2_000_000);
-}
-
-fn decrement_status_count(env: &Env, status: InvoiceStatus) {
-    let key = DataKey::StatusCount(status as u32);
-    let current: u64 = env.storage().persistent().get(&key).unwrap_or(0u64);
-    let next = current
-        .checked_sub(1)
-        .unwrap_or_else(|| panic_with_error!(env, InvoiceError::InvalidStatusTransition));
-    env.storage().persistent().set(&key, &next);
-    env.storage().persistent().extend_ttl(&key, 100, 2_000_000);
-}
-
-fn read_status_count(env: &Env, status: InvoiceStatus) -> u64 {
-    env.storage()
-        .persistent()
-        .get(&DataKey::StatusCount(status as u32))
-        .unwrap_or(0u64)
-}
