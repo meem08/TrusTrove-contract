@@ -1,6 +1,8 @@
 #![no_std]
 
-use soroban_sdk::{contract, contractimpl, panic_with_error, token, Address, BytesN, Env, Vec};
+use soroban_sdk::{
+    contract, contractimpl, panic_with_error, token, Address, BytesN, Env, IntoVal, Symbol, Vec,
+};
 use trusttrove_common::persistent_set;
 
 mod errors;
@@ -93,11 +95,7 @@ impl EscrowContract {
             panic_with_error!(&env, EscrowError::AlreadyLocked);
         }
 
-        let usdc_id: Address = env
-            .storage()
-            .instance()
-            .get(&DataKey::UsdcAsset)
-            .unwrap_or_else(|| panic_with_error!(&env, EscrowError::NotInitialized));
+        let usdc_id: Address = env.storage().instance().get(&DataKey::UsdcAsset).unwrap();
         let usdc = token::Client::new(&env, &usdc_id);
         usdc.transfer(&pool, &env.current_contract_address(), &(amount as i128));
 
@@ -135,7 +133,7 @@ impl EscrowContract {
             .storage()
             .instance()
             .get(&DataKey::PoolContract)
-            .unwrap_or_else(|| panic_with_error!(&env, EscrowError::NotInitialized));
+            .unwrap();
         pool.require_auth();
 
         let key = DataKey::Locked(invoice_id.clone());
@@ -145,11 +143,22 @@ impl EscrowContract {
             .get(&key)
             .unwrap_or_else(|| panic_with_error!(&env, EscrowError::NotFound));
 
-        let usdc_id: Address = env
+        // Issue #57: validate the recipient against the actual invoice issuer to prevent
+        // funds from being redirected to an arbitrary address.
+        let invoice_contract: Address = env
             .storage()
             .instance()
-            .get(&DataKey::UsdcAsset)
-            .unwrap_or_else(|| panic_with_error!(&env, EscrowError::NotInitialized));
+            .get(&DataKey::InvoiceContract)
+            .unwrap();
+        let mut args = Vec::new(&env);
+        args.push_back(invoice_id.clone().into_val(&env));
+        let actual_issuer: Address =
+            env.invoke_contract(&invoice_contract, &Symbol::new(&env, "get_issuer"), args);
+        if issuer != actual_issuer {
+            panic_with_error!(&env, EscrowError::NotAuthorized);
+        }
+
+        let usdc_id: Address = env.storage().instance().get(&DataKey::UsdcAsset).unwrap();
         let usdc = token::Client::new(&env, &usdc_id);
         usdc.transfer(
             &env.current_contract_address(),
@@ -190,7 +199,7 @@ impl EscrowContract {
             .storage()
             .instance()
             .get(&DataKey::PoolContract)
-            .unwrap_or_else(|| panic_with_error!(&env, EscrowError::NotInitialized));
+            .unwrap();
         pool.require_auth();
 
         let key = DataKey::Locked(invoice_id.clone());
@@ -204,11 +213,7 @@ impl EscrowContract {
             panic_with_error!(&env, EscrowError::InvalidAmount);
         }
 
-        let usdc_id: Address = env
-            .storage()
-            .instance()
-            .get(&DataKey::UsdcAsset)
-            .unwrap_or_else(|| panic_with_error!(&env, EscrowError::NotInitialized));
+        let usdc_id: Address = env.storage().instance().get(&DataKey::UsdcAsset).unwrap();
         let usdc = token::Client::new(&env, &usdc_id);
         usdc.transfer(
             &env.current_contract_address(),
@@ -241,16 +246,12 @@ impl EscrowContract {
             return false;
         }
 
-        let admin: Address = env
-            .storage()
-            .instance()
-            .get(&DataKey::Admin)
-            .unwrap_or_else(|| panic_with_error!(&env, EscrowError::NotInitialized));
+        let admin: Address = env.storage().instance().get(&DataKey::Admin).unwrap();
         let pool: Address = env
             .storage()
             .instance()
             .get(&DataKey::PoolContract)
-            .unwrap_or_else(|| panic_with_error!(&env, EscrowError::NotInitialized));
+            .unwrap();
 
         // Require the caller to authenticate themselves, then verify they are
         // either the admin (emergency/recovery path) or the pool contract
@@ -261,16 +262,8 @@ impl EscrowContract {
             panic_with_error!(&env, EscrowError::NotAuthorized);
         }
 
-        let record: EscrowRecord = env
-            .storage()
-            .persistent()
-            .get(&key)
-            .unwrap_or_else(|| panic_with_error!(&env, EscrowError::NotFound));
-        let usdc_id: Address = env
-            .storage()
-            .instance()
-            .get(&DataKey::UsdcAsset)
-            .unwrap_or_else(|| panic_with_error!(&env, EscrowError::NotInitialized));
+        let record: EscrowRecord = env.storage().persistent().get(&key).unwrap();
+        let usdc_id: Address = env.storage().instance().get(&DataKey::UsdcAsset).unwrap();
         let usdc = token::Client::new(&env, &usdc_id);
         usdc.transfer(
             &env.current_contract_address(),
@@ -310,6 +303,31 @@ impl EscrowContract {
             .unwrap_or(0)
     }
 
+    pub fn transfer_ownership(env: Env, new_admin: Address) {
+        // Transfers admin ownership to a new address.
+        //
+        // Requires authentication from BOTH the current admin and the incoming
+        // new admin, preventing accidental transfers to wrong addresses.
+        //
+        // # Arguments
+        // * `env` - The Soroban environment.
+        // * `new_admin` - The address that will become the new admin.
+        //
+        // # Panics
+        // * `AlreadyInitialized` used internally; panics `NotAuthorized` if auth fails.
+        //
+        // # Example
+        // ```ignore
+        // client.transfer_ownership(&new_admin);
+        // ```
+        let admin: Address = env.storage().instance().get(&DataKey::Admin).unwrap();
+        admin.require_auth();
+        new_admin.require_auth();
+        env.storage().instance().set(&DataKey::Admin, &new_admin);
+        events::ownership_transferred(&env, &admin, &new_admin);
+        Self::extend_instance_ttl(&env);
+    }
+
     pub fn get_history(env: Env, invoice_id: BytesN<32>) -> Vec<EscrowEvent> {
         let key = DataKey::History(invoice_id);
         env.storage()
@@ -332,5 +350,9 @@ impl EscrowContract {
             timestamp: env.ledger().timestamp(),
         });
         persistent_set(env, &key, &history);
+    }
+
+    fn extend_instance_ttl(env: &Env) {
+        env.storage().instance().extend_ttl(100, 2_000_000);
     }
 }
