@@ -994,3 +994,178 @@ fn test_add_then_remove_then_create_fails() {
     client.remove_supported_asset(&asset);
     assert!(!client.is_supported_asset(&asset));
 }
+
+// ── Storage-write optimisation: StatusMembership elimination ──────────────
+//
+// The StatusMembership marker (a separate (status, invoice_id) -> bool
+// entry) was removed from extend_status_index / move_status_index and its
+// membership check in get_by_status was replaced by a direct
+// invoice.status comparison.  This eliminates 2 persistent writes (set +
+// extend_ttl) per create and per status transition.
+//
+// The tests below verify that all three indices remain correct before and
+// after status transitions, confirming the optimisation is transparent to
+// callers.
+
+#[test]
+fn test_optimisation_issuer_index_correct_after_multiple_creates() {
+    let (env, client, issuer, buyer, _, usdc) = setup();
+    let due_date = env.ledger().timestamp() + 86400;
+
+    let id1 = client.create(&issuer, &buyer, &1_000_000_000, &due_date, &usdc);
+    let id2 = client.create(&issuer, &buyer, &2_000_000_000, &due_date, &usdc);
+    let id3 = client.create(&issuer, &buyer, &3_000_000_000, &due_date, &usdc);
+
+    let invoices = client.get_by_issuer(&issuer, &0, &10);
+    assert_eq!(invoices.len(), 3);
+    assert_eq!(invoices.get(0).unwrap().id, id1);
+    assert_eq!(invoices.get(1).unwrap().id, id2);
+    assert_eq!(invoices.get(2).unwrap().id, id3);
+}
+
+#[test]
+fn test_optimisation_buyer_index_correct_after_multiple_creates() {
+    let (env, client, issuer, buyer, _, usdc) = setup();
+    let due_date = env.ledger().timestamp() + 86400;
+
+    let id1 = client.create(&issuer, &buyer, &1_000_000_000, &due_date, &usdc);
+    let id2 = client.create(&issuer, &buyer, &2_000_000_000, &due_date, &usdc);
+
+    let invoices = client.get_by_buyer(&buyer, &0, &10);
+    assert_eq!(invoices.len(), 2);
+    assert_eq!(invoices.get(0).unwrap().id, id1);
+    assert_eq!(invoices.get(1).unwrap().id, id2);
+}
+
+#[test]
+fn test_optimisation_status_index_correct_after_creates_and_transitions() {
+    let (env, client, issuer, buyer, _, usdc) = setup();
+    let due_date = env.ledger().timestamp() + 86400;
+
+    let id1 = client.create(&issuer, &buyer, &1_000_000_000, &due_date, &usdc);
+    let id2 = client.create(&issuer, &buyer, &2_000_000_000, &due_date, &usdc);
+    let id3 = client.create(&issuer, &buyer, &3_000_000_000, &due_date, &usdc);
+
+    let created = client.get_by_status(&InvoiceStatus::Created, &0, &10);
+    assert_eq!(created.len(), 3);
+
+    client.list_for_financing(&id1, &200);
+    let created = client.get_by_status(&InvoiceStatus::Created, &0, &10);
+    assert_eq!(created.len(), 2);
+    let listed = client.get_by_status(&InvoiceStatus::Listed, &0, &10);
+    assert_eq!(listed.len(), 1);
+    assert_eq!(listed.get(0).unwrap().id, id1);
+
+    client.list_for_financing(&id2, &250);
+    let created = client.get_by_status(&InvoiceStatus::Created, &0, &10);
+    assert_eq!(created.len(), 1);
+    let listed = client.get_by_status(&InvoiceStatus::Listed, &0, &10);
+    assert_eq!(listed.len(), 2);
+
+    // Paginated query at offset 0 hits the stale entry (id1 is now Listed),
+    // so it returns 0 within the window.  The remaining active entry (id3)
+    // is at position 2.
+    let page = client.get_by_status(&InvoiceStatus::Created, &0, &1);
+    assert_eq!(page.len(), 0);
+    let page = client.get_by_status(&InvoiceStatus::Created, &2, &1);
+    assert_eq!(page.len(), 1);
+    assert_eq!(page.get(0).unwrap().id, id3);
+}
+
+#[test]
+fn test_optimisation_multiple_issuers_have_separate_indices() {
+    let (env, client, issuer, buyer, registry, usdc) = setup();
+    let due_date = env.ledger().timestamp() + 86400;
+
+    let issuer2 = Address::generate(&env);
+    registry.register(&issuer2);
+
+    let id1 = client.create(&issuer, &buyer, &1_000_000_000, &due_date, &usdc);
+    let id2 = client.create(&issuer2, &buyer, &2_000_000_000, &due_date, &usdc);
+
+    let invs1 = client.get_by_issuer(&issuer, &0, &10);
+    assert_eq!(invs1.len(), 1);
+    assert_eq!(invs1.get(0).unwrap().id, id1);
+
+    let invs2 = client.get_by_issuer(&issuer2, &0, &10);
+    assert_eq!(invs2.len(), 1);
+    assert_eq!(invs2.get(0).unwrap().id, id2);
+}
+
+#[test]
+fn test_optimisation_multiple_buyers_have_separate_indices() {
+    let (env, client, issuer, buyer, registry, usdc) = setup();
+    let due_date = env.ledger().timestamp() + 86400;
+
+    let buyer2 = Address::generate(&env);
+    registry.register(&buyer2);
+
+    let id1 = client.create(&issuer, &buyer, &1_000_000_000, &due_date, &usdc);
+    let id2 = client.create(&issuer, &buyer2, &2_000_000_000, &due_date, &usdc);
+
+    let invs1 = client.get_by_buyer(&buyer, &0, &10);
+    assert_eq!(invs1.len(), 1);
+    assert_eq!(invs1.get(0).unwrap().id, id1);
+
+    let invs2 = client.get_by_buyer(&buyer2, &0, &10);
+    assert_eq!(invs2.len(), 1);
+    assert_eq!(invs2.get(0).unwrap().id, id2);
+}
+
+#[test]
+fn test_optimisation_status_index_multi_status_query() {
+    let (env, client, issuer, buyer, _, usdc) = setup();
+    let due_date = env.ledger().timestamp() + 86400;
+    let pool = mock_pool_with_asset(&env, &usdc);
+    client.set_pool_contract(&pool);
+
+    let id = client.create(&issuer, &buyer, &1_000_000_000, &due_date, &usdc);
+
+    assert_eq!(
+        client.get_by_status(&InvoiceStatus::Created, &0, &10).len(),
+        1
+    );
+
+    client.list_for_financing(&id, &200);
+    assert_eq!(
+        client.get_by_status(&InvoiceStatus::Created, &0, &10).len(),
+        0
+    );
+    assert_eq!(
+        client.get_by_status(&InvoiceStatus::Listed, &0, &10).len(),
+        1
+    );
+
+    client.mark_funded(&id, &pool, &usdc, &980_000_000);
+    assert_eq!(
+        client.get_by_status(&InvoiceStatus::Listed, &0, &10).len(),
+        0
+    );
+    assert_eq!(
+        client.get_by_status(&InvoiceStatus::Funded, &0, &10).len(),
+        1
+    );
+
+    client.mark_shipped(&id);
+    assert_eq!(
+        client.get_by_status(&InvoiceStatus::Funded, &0, &10).len(),
+        0
+    );
+    assert_eq!(
+        client.get_by_status(&InvoiceStatus::Active, &0, &10).len(),
+        1
+    );
+
+    client.confirm_delivery(&id, &issuer);
+    client.confirm_delivery(&id, &buyer);
+    assert_eq!(
+        client.get_by_status(&InvoiceStatus::Active, &0, &10).len(),
+        0
+    );
+    assert_eq!(
+        client
+            .get_by_status(&InvoiceStatus::Confirmed, &0, &10)
+            .len(),
+        1
+    );
+}
