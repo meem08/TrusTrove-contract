@@ -641,7 +641,9 @@ impl InvoiceContract {
             .get(&DataKey::Admin)
             .unwrap_or_else(|| panic_with_error!(&env, InvoiceError::NotFound));
         admin.require_auth();
-        env.storage().instance().set(&DataKey::ExpiryWindow, &window);
+        env.storage()
+            .instance()
+            .set(&DataKey::ExpiryWindow, &window);
         events::expiry_window_set(&env, window);
         Self::extend_instance_ttl(&env);
     }
@@ -688,7 +690,11 @@ impl InvoiceContract {
         }
 
         let listed_at = invoice.listed_at.unwrap_or(0);
-        let expiry_window = env.storage().instance().get(&DataKey::ExpiryWindow).unwrap_or(7 * 24 * 60 * 60);
+        let expiry_window = env
+            .storage()
+            .instance()
+            .get(&DataKey::ExpiryWindow)
+            .unwrap_or(7 * 24 * 60 * 60);
         let current_time = env.ledger().timestamp();
         if current_time <= listed_at + expiry_window {
             panic_with_error!(&env, InvoiceError::ListingNotExpired);
