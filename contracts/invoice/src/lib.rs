@@ -928,7 +928,9 @@ impl InvoiceContract {
         }
         counts
     }
+}
 
+impl InvoiceContract {
     fn extend_instance_ttl(env: &Env) {
         env.storage().instance().extend_ttl(100, 2_000_000);
     }
