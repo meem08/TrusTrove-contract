@@ -49,6 +49,7 @@ impl InvoiceContract {
         env.storage()
             .instance()
             .set(&DataKey::ExpiryWindow, &(7u64 * 24u64 * 60u64 * 60u64));
+        Self::extend_instance_ttl(&env);
     }
 
     pub fn set_pool_contract(env: Env, pool_contract: Address) {
@@ -101,7 +102,7 @@ impl InvoiceContract {
         env.storage()
             .instance()
             .set(&DataKey::SupportedAssetCount, &(count + 1));
-        env.storage().persistent().set(&key, &true);
+        persistent_set(&env, &key, &true);
     }
 
     pub fn remove_supported_asset(env: Env, asset: Address) {
@@ -271,10 +272,10 @@ impl InvoiceContract {
         let inv_key = DataKey::Invoice(invoice_id.clone());
         persistent_set(&env, &inv_key, &invoice);
 
-        self::extend_issuer_index(&env, &issuer, &invoice_id);
-        self::extend_buyer_index(&env, &buyer, &invoice_id);
-        self::extend_status_index(&env, InvoiceStatus::Created, &invoice_id);
-        self::increment_status_count(&env, InvoiceStatus::Created);
+        extend_issuer_index(&env, &issuer, &invoice_id);
+        extend_buyer_index(&env, &buyer, &invoice_id);
+        extend_status_index(&env, InvoiceStatus::Created, &invoice_id);
+        increment_status_count(&env, InvoiceStatus::Created);
 
         events::invoice_created(
             &env,
@@ -325,7 +326,7 @@ impl InvoiceContract {
         invoice.listed_at = Some(env.ledger().timestamp());
         persistent_set(&env, &inv_key, &invoice);
 
-        self::move_status_index(
+        move_status_index(
             &env,
             &invoice_id,
             InvoiceStatus::Created,
@@ -393,7 +394,7 @@ impl InvoiceContract {
         invoice.funding_pool = Some(pool_address);
         persistent_set(&env, &inv_key, &invoice);
 
-        self::move_status_index(
+        move_status_index(
             &env,
             &invoice_id,
             InvoiceStatus::Listed,
@@ -435,7 +436,7 @@ impl InvoiceContract {
         invoice.shipped_at = Some(env.ledger().timestamp());
         persistent_set(&env, &inv_key, &invoice);
 
-        self::move_status_index(
+        move_status_index(
             &env,
             &invoice_id,
             InvoiceStatus::Funded,
@@ -496,7 +497,7 @@ impl InvoiceContract {
 
         if invoice.issuer_confirmed && invoice.buyer_confirmed {
             invoice.status = InvoiceStatus::Confirmed;
-            self::move_status_index(
+            move_status_index(
                 &env,
                 &invoice_id,
                 InvoiceStatus::Active,
@@ -564,7 +565,7 @@ impl InvoiceContract {
         updated.repaid_at = Some(env.ledger().timestamp());
         persistent_set(&env, &inv_key, &updated);
 
-        self::move_status_index(
+        move_status_index(
             &env,
             &invoice_id,
             InvoiceStatus::Confirmed,
@@ -621,7 +622,7 @@ impl InvoiceContract {
         invoice.status = InvoiceStatus::Defaulted;
         persistent_set(&env, &inv_key, &invoice);
 
-        self::move_status_index(&env, &invoice_id, prev_status, InvoiceStatus::Defaulted);
+        move_status_index(&env, &invoice_id, prev_status, InvoiceStatus::Defaulted);
 
         let pool: Address = invoice
             .funding_pool
@@ -641,6 +642,7 @@ impl InvoiceContract {
             .unwrap_or_else(|| panic_with_error!(&env, InvoiceError::NotFound));
         admin.require_auth();
         env.storage().instance().set(&DataKey::ExpiryWindow, &window);
+        events::expiry_window_set(&env, window);
         Self::extend_instance_ttl(&env);
     }
 
@@ -677,7 +679,7 @@ impl InvoiceContract {
             .try_invoke_contract::<(), soroban_sdk::Error>(
                 &env.current_contract_address(),
                 &Symbol::new(&env, "check_auth"),
-                (invoice.issuer.clone(),).into_val(&env),
+                (invoice.issuer.clone(),),
             )
             .is_ok();
 
@@ -694,10 +696,9 @@ impl InvoiceContract {
 
         let prev_status = invoice.status;
         invoice.status = InvoiceStatus::Expired;
-        env.storage().persistent().set(&inv_key, &invoice);
-        env.storage().persistent().extend_ttl(&inv_key, 100, 2_000_000);
+        persistent_set(&env, &inv_key, &invoice);
 
-        self::move_status_index(&env, &invoice_id, prev_status, InvoiceStatus::Expired);
+        move_status_index(&env, &invoice_id, prev_status, InvoiceStatus::Expired);
         events::invoice_expired(&env, &invoice_id);
         true
     }
@@ -921,7 +922,7 @@ impl InvoiceContract {
             InvoiceStatus::Expired,
         ];
         for status in statuses {
-            let key = String::from_slice(&env, status.as_str());
+            let key = String::from_str(&env, status.as_str());
             let value = read_status_count(&env, status);
             counts.set(&key, &value);
         }
@@ -953,22 +954,13 @@ fn extend_status_index(env: &Env, status: InvoiceStatus, invoice_id: &BytesN<32>
     let status_u32 = status as u32;
 
     let membership_key = DataKey::StatusMembership(status_u32, invoice_id.clone());
-    env.storage().persistent().set(&membership_key, &true);
-    env.storage()
-        .persistent()
-        .extend_ttl(&membership_key, 100, 2_000_000);
+    persistent_set(env, &membership_key, &true);
 
     let count_key = DataKey::StatusIndexCount(status_u32);
     let count: u32 = env.storage().persistent().get(&count_key).unwrap_or(0);
     let entry_key = DataKey::StatusIndexEntry(status_u32, count);
-    env.storage().persistent().set(&entry_key, invoice_id);
-    env.storage()
-        .persistent()
-        .extend_ttl(&entry_key, 100, 2_000_000);
-    env.storage().persistent().set(&count_key, &(count + 1));
-    env.storage()
-        .persistent()
-        .extend_ttl(&count_key, 100, 2_000_000);
+    persistent_set(env, &entry_key, invoice_id);
+    persistent_set(env, &count_key, &(count + 1));
 }
 
 fn move_status_index(env: &Env, invoice_id: &BytesN<32>, from: InvoiceStatus, to: InvoiceStatus) {
@@ -985,8 +977,7 @@ fn move_status_index(env: &Env, invoice_id: &BytesN<32>, from: InvoiceStatus, to
 fn increment_status_count(env: &Env, status: InvoiceStatus) {
     let key = DataKey::StatusCount(status as u32);
     let current: u64 = env.storage().persistent().get(&key).unwrap_or(0u64);
-    env.storage().persistent().set(&key, &(current + 1));
-    env.storage().persistent().extend_ttl(&key, 100, 2_000_000);
+    persistent_set(env, &key, &(current + 1));
 }
 
 fn decrement_status_count(env: &Env, status: InvoiceStatus) {
@@ -995,8 +986,7 @@ fn decrement_status_count(env: &Env, status: InvoiceStatus) {
     let next = current
         .checked_sub(1)
         .unwrap_or_else(|| panic_with_error!(env, InvoiceError::InvalidStatusTransition));
-    env.storage().persistent().set(&key, &next);
-    env.storage().persistent().extend_ttl(&key, 100, 2_000_000);
+    persistent_set(env, &key, &next);
 }
 
 fn read_status_count(env: &Env, status: InvoiceStatus) -> u64 {
