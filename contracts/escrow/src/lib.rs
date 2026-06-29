@@ -3,6 +3,7 @@
 use soroban_sdk::{
     contract, contractimpl, panic_with_error, token, Address, BytesN, Env, IntoVal, Symbol, Vec,
 };
+use trusttrove_common::persistent_set;
 
 mod errors;
 mod events;
@@ -57,7 +58,6 @@ impl EscrowContract {
         env.storage()
             .instance()
             .set(&DataKey::UsdcAsset, &usdc_asset);
-        Self::extend_instance_ttl(&env);
     }
 
     pub fn lock(env: Env, invoice_id: BytesN<32>, amount: u128) -> bool {
@@ -104,10 +104,8 @@ impl EscrowContract {
             amount,
             locked_at: env.ledger().timestamp(),
         };
-        env.storage().persistent().set(&key, &record);
-        env.storage().persistent().extend_ttl(&key, 100, 2_000_000);
+        persistent_set(&env, &key, &record);
         Self::append_history(&env, &invoice_id, EscrowAction::Locked, amount);
-        Self::extend_instance_ttl(&env);
         events::funds_locked(&env, &invoice_id, amount);
 
         true
@@ -175,7 +173,6 @@ impl EscrowContract {
             record.amount,
         );
         env.storage().persistent().remove(&key);
-        Self::extend_instance_ttl(&env);
         events::released_to_issuer(&env, &invoice_id, &issuer, record.amount);
         true
     }
@@ -212,7 +209,7 @@ impl EscrowContract {
             .get(&key)
             .unwrap_or_else(|| panic_with_error!(&env, EscrowError::NotFound));
 
-        if repayment_amount != record.amount {
+        if repayment_amount == 0 || repayment_amount > record.amount {
             panic_with_error!(&env, EscrowError::InvalidAmount);
         }
 
@@ -224,14 +221,21 @@ impl EscrowContract {
             &(repayment_amount as i128),
         );
 
+        let remaining_amount = record.amount - repayment_amount;
+        let mut updated_record = record.clone();
+        if remaining_amount == 0 {
+            env.storage().persistent().remove(&key);
+        } else {
+            updated_record.amount = remaining_amount;
+            persistent_set(&env, &key, &updated_record);
+        }
+
         Self::append_history(
             &env,
             &invoice_id,
             EscrowAction::ReleasedToPool,
             repayment_amount,
         );
-        env.storage().persistent().remove(&key);
-        Self::extend_instance_ttl(&env);
         events::released_to_pool(&env, &invoice_id, &pool, repayment_amount);
         true
     }
@@ -274,7 +278,6 @@ impl EscrowContract {
             record.amount,
         );
         env.storage().persistent().remove(&key);
-        Self::extend_instance_ttl(&env);
         events::default_resolved(&env, &invoice_id, &pool, record.amount);
         true
     }
@@ -346,8 +349,7 @@ impl EscrowContract {
             amount,
             timestamp: env.ledger().timestamp(),
         });
-        env.storage().persistent().set(&key, &history);
-        env.storage().persistent().extend_ttl(&key, 100, 2_000_000);
+        persistent_set(env, &key, &history);
     }
 
     fn extend_instance_ttl(env: &Env) {

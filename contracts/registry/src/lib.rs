@@ -1,6 +1,7 @@
 #![no_std]
 
 use soroban_sdk::{contract, contractimpl, panic_with_error, Address, Env, Map, String, Vec};
+use trusttrove_common::persistent_set;
 
 mod errors;
 mod events;
@@ -37,7 +38,6 @@ impl RegistryContract {
         }
         admin.require_auth();
         env.storage().instance().set(&DataKey::Admin, &admin);
-        Self::extend_instance_ttl(&env);
     }
 
     /// Registers a new issuer profile with initial metadata.
@@ -74,14 +74,17 @@ impl RegistryContract {
             metadata,
         };
         let key = DataKey::Profile(address.clone());
-        env.storage().persistent().set(&key, &profile);
-        env.storage().persistent().extend_ttl(&key, 100, 2_000_000);
+        persistent_set(&env, &key, &profile);
         events::issuer_registered(&env, &address);
-        Self::extend_instance_ttl(&env);
         true
     }
 
-    pub fn batch_register_issuers(env: Env, entries: Vec<(Address, Map<String, String>)>) -> u32 {
+    // Returns the list of addresses that were skipped (already registered) so
+    // the caller knows exactly which entries were not processed (#66).
+    pub fn batch_register_issuers(
+        env: Env,
+        entries: Vec<(Address, Map<String, String>)>,
+    ) -> Vec<Address> {
         let admin: Address = env
             .storage()
             .instance()
@@ -89,11 +92,13 @@ impl RegistryContract {
             .unwrap_or_else(|| panic_with_error!(&env, RegistryError::NotFound));
         admin.require_auth();
 
-        let mut count: u32 = 0;
+        let mut skipped: Vec<Address> = Vec::new(&env);
+        let mut registered: u32 = 0;
         for entry in entries.iter() {
             let (address, metadata) = entry;
             let key = DataKey::Profile(address.clone());
             if env.storage().persistent().has(&key) {
+                skipped.push_back(address.clone());
                 continue;
             }
 
@@ -105,16 +110,15 @@ impl RegistryContract {
                 metadata,
             };
 
-            env.storage().persistent().set(&key, &profile);
-            env.storage().persistent().extend_ttl(&key, 100, 2_000_000);
+            persistent_set(&env, &key, &profile);
             events::issuer_registered(&env, &address);
-            count += 1;
+            registered += 1;
         }
 
-        if count > 0 {
+        if registered > 0 {
             Self::extend_instance_ttl(&env);
         }
-        count
+        skipped
     }
 
     /// Registers a new buyer profile with initial metadata.
@@ -151,10 +155,8 @@ impl RegistryContract {
             metadata,
         };
         let key = DataKey::Profile(address.clone());
-        env.storage().persistent().set(&key, &profile);
-        env.storage().persistent().extend_ttl(&key, 100, 2_000_000);
+        persistent_set(&env, &key, &profile);
         events::buyer_registered(&env, &address);
-        Self::extend_instance_ttl(&env);
         true
     }
 
@@ -184,8 +186,7 @@ impl RegistryContract {
             .get(&key)
             .unwrap_or_else(|| panic_with_error!(&env, RegistryError::NotFound));
         profile.metadata = metadata;
-        env.storage().persistent().set(&key, &profile);
-        env.storage().persistent().extend_ttl(&key, 100, 2_000_000);
+        persistent_set(&env, &key, &profile);
         events::metadata_updated(&env, &address);
         true
     }
@@ -260,10 +261,8 @@ impl RegistryContract {
             .get(&key)
             .unwrap_or_else(|| panic_with_error!(&env, RegistryError::NotFound));
         profile.verified = false;
-        env.storage().persistent().set(&key, &profile);
-        env.storage().persistent().extend_ttl(&key, 100, 2_000_000);
+        persistent_set(&env, &key, &profile);
         events::address_revoked(&env, &address);
-        Self::extend_instance_ttl(&env);
         true
     }
 
@@ -281,10 +280,8 @@ impl RegistryContract {
             .get(&key)
             .unwrap_or_else(|| panic_with_error!(&env, RegistryError::NotFound));
         profile.verified = verify;
-        env.storage().persistent().set(&key, &profile);
-        env.storage().persistent().extend_ttl(&key, 100, 2_000_000);
+        persistent_set(&env, &key, &profile);
         events::profile_verified(&env, &address, verify);
-        Self::extend_instance_ttl(&env);
         true
     }
 
@@ -338,7 +335,9 @@ impl RegistryContract {
             .get(&DataKey::Admin)
             .unwrap_or_else(|| panic_with_error!(&env, RegistryError::NotFound))
     }
+}
 
+impl RegistryContract {
     fn extend_instance_ttl(env: &Env) {
         env.storage().instance().extend_ttl(100, 2_000_000);
     }
