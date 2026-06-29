@@ -943,8 +943,14 @@ fn extend_status_index(env: &Env, status: InvoiceStatus, invoice_id: &BytesN<32>
     let count_key = DataKey::StatusIndexCount(status_u32);
     let count: u32 = env.storage().persistent().get(&count_key).unwrap_or(0);
     let entry_key = DataKey::StatusIndexEntry(status_u32, count);
-    persistent_set(env, &entry_key, invoice_id);
-    persistent_set(env, &count_key, &(count + 1));
+    env.storage().persistent().set(&entry_key, invoice_id);
+    env.storage()
+        .persistent()
+        .extend_ttl(&entry_key, 100, 2_000_000);
+    env.storage().persistent().set(&count_key, &(count + 1));
+    env.storage()
+        .persistent()
+        .extend_ttl(&count_key, 100, 2_000_000);
 }
 
 fn move_status_index(env: &Env, invoice_id: &BytesN<32>, from: InvoiceStatus, to: InvoiceStatus) {
