@@ -4,7 +4,7 @@ use soroban_sdk::{
     contract, contractimpl, contracttype, testutils::Address as _, Address, BytesN, Env,
 };
 
-use crate::{PoolContract, PoolContractClient};
+use crate::{DataKey, PoolContract, PoolContractClient};
 
 use trusttrove_escrow::{EscrowContract as RealEscrow, EscrowContractClient as RealEscrowClient};
 use trusttrove_invoice::{
@@ -67,6 +67,7 @@ pub struct TKey(Address);
 struct TestEnv {
     env: Env,
     pool: PoolContractClient<'static>,
+    pool_id: Address,
     invoice: RealInvoiceClient<'static>,
     usdc_id: Address,
     xlm_id: Address,
@@ -139,6 +140,7 @@ fn setup() -> TestEnv {
     TestEnv {
         env,
         pool,
+        pool_id,
         invoice,
         usdc_id,
         xlm_id,
@@ -351,6 +353,25 @@ fn test_lp_position_after_deposit() {
     assert_eq!(pos.shares, 50_000_000_000);
     assert_eq!(pos.usdc_value, 50_000_000_000);
     assert_eq!(pos.deposit_count, 1);
+}
+
+#[test]
+#[should_panic(expected = "Error(Contract, #13)")]
+fn test_lp_position_overflow_panics() {
+    let te = setup();
+    let env = &te.env;
+    let pool_id = &te.pool_id;
+    let lp = &te.lp;
+    env.as_contract(pool_id, || {
+        env.storage().instance().set(&DataKey::TotalShares, &1u128);
+        env.storage()
+            .instance()
+            .set(&DataKey::TotalDeposits, &u128::MAX);
+        env.storage()
+            .persistent()
+            .set(&DataKey::LPShares(lp.clone()), &2u128);
+    });
+    te.pool.get_lp_position(&te.lp);
 }
 
 // ============== UTILIZATION RATE TESTS ==============
@@ -820,6 +841,239 @@ fn test_withdraw_full_after_default() {
     assert_eq!(stats.total_shares, 0);
 }
 
+// ============== INVARIANT / PROPERTY-BASED TESTS ==============
+
+use proptest::prelude::*;
+
+fn pool_usdc_balance(env: &Env, pool_id: &Address, usdc_id: &Address) -> u128 {
+    env.as_contract(usdc_id, || {
+        env.storage()
+            .persistent()
+            .get::<_, i128>(&TKey(pool_id.clone()))
+            .unwrap_or(0) as u128
+    })
+}
+
+fn assert_invariants(env: &Env, pool: &PoolContractClient, pool_id: &Address, usdc_id: &Address) {
+    let stats = pool.get_stats();
+    let balance = pool_usdc_balance(env, pool_id, usdc_id);
+
+    assert!(
+        stats.total_deposits >= stats.total_funded,
+        "total_deposits ({}) must be >= total_funded ({})",
+        stats.total_deposits,
+        stats.total_funded,
+    );
+    assert_eq!(
+        stats.available_liquidity,
+        stats.total_deposits - stats.total_funded,
+        "available_liquidity must equal total_deposits - total_funded",
+    );
+    assert!(
+        balance >= stats.available_liquidity,
+        "pool balance ({}) must be >= available_liquidity ({})",
+        balance,
+        stats.available_liquidity,
+    );
+
+    let expected_util = (stats.total_funded * 10000)
+        .checked_div(stats.total_deposits)
+        .unwrap_or(0) as u32;
+    assert_eq!(
+        stats.utilization_rate_bps, expected_util,
+        "utilization rate mismatch",
+    );
+}
+
+proptest! {
+    #[test]
+    fn prop_invariant_deposit_then_full_withdraw(amount in 1_000_000u128..10_000_000_000u128) {
+        let te = setup();
+
+        te.pool.deposit(&te.lp, &amount);
+        assert_invariants(&te.env, &te.pool, &te.pool_id, &te.usdc_id);
+
+        let stats = te.pool.get_stats();
+        assert_eq!(stats.total_deposits, amount);
+        assert_eq!(
+            pool_usdc_balance(&te.env, &te.pool_id, &te.usdc_id),
+            amount,
+        );
+
+        let returned = te.pool.withdraw(&te.lp, &amount);
+        assert_invariants(&te.env, &te.pool, &te.pool_id, &te.usdc_id);
+        assert_eq!(returned, amount);
+        assert_eq!(
+            pool_usdc_balance(&te.env, &te.pool_id, &te.usdc_id),
+            0,
+        );
+    }
+
+    #[test]
+    fn prop_invariant_deposit_partial_withdraw(
+        amount in 2_000_000u128..10_000_000_000u128,
+        withdraw_frac in 1..100u128,
+    ) {
+        let te = setup();
+        let wdraw = amount * withdraw_frac / 100;
+        // ensure at least 1 unit to withdraw
+        let wdraw = core::cmp::max(wdraw, 1);
+        let wdraw = core::cmp::min(wdraw, amount - 1);
+
+        te.pool.deposit(&te.lp, &amount);
+        assert_invariants(&te.env, &te.pool, &te.pool_id, &te.usdc_id);
+
+        let returned = te.pool.withdraw(&te.lp, &wdraw);
+        assert_invariants(&te.env, &te.pool, &te.pool_id, &te.usdc_id);
+        assert!(returned > 0);
+        assert!(returned <= amount);
+
+        let stats = te.pool.get_stats();
+        assert_eq!(stats.total_deposits, amount - returned);
+    }
+
+    #[test]
+    fn prop_invariant_deposit_fund_repay(deposit in 10_000_000_000u128..100_000_000_000u128) {
+        let te = setup();
+
+        te.pool.deposit(&te.lp, &deposit);
+        assert_invariants(&te.env, &te.pool, &te.pool_id, &te.usdc_id);
+        assert_eq!(
+            pool_usdc_balance(&te.env, &te.pool_id, &te.usdc_id),
+            deposit,
+        );
+
+        let invoice_id = create_and_list(&te, &te.usdc_id);
+        te.pool.fund_invoice(&invoice_id);
+        assert_invariants(&te.env, &te.pool, &te.pool_id, &te.usdc_id);
+        assert_eq!(
+            pool_usdc_balance(&te.env, &te.pool_id, &te.usdc_id),
+            te.pool.get_stats().available_liquidity,
+            "after fund, pool balance == available liquidity",
+        );
+
+        te.invoice.mark_shipped(&invoice_id);
+        te.invoice.confirm_delivery(&invoice_id, &te.issuer);
+        te.invoice.confirm_delivery(&invoice_id, &te.buyer);
+        te.invoice.repay(&invoice_id);
+        assert_invariants(&te.env, &te.pool, &te.pool_id, &te.usdc_id);
+    }
+
+    #[test]
+    fn prop_invariant_multi_lp(
+        amount1 in 1_000_000u128..50_000_000_000u128,
+        amount2 in 1_000_000u128..50_000_000_000u128,
+    ) {
+        let te = setup();
+        let lp2 = create_lp_with_balance(&te, 100_000_000_000_000i128);
+
+        te.pool.deposit(&te.lp, &amount1);
+        assert_invariants(&te.env, &te.pool, &te.pool_id, &te.usdc_id);
+        te.pool.deposit(&lp2, &amount2);
+        assert_invariants(&te.env, &te.pool, &te.pool_id, &te.usdc_id);
+
+        assert_eq!(te.pool.get_stats().total_deposits, amount1 + amount2);
+
+        te.pool.withdraw(&te.lp, &amount1);
+        assert_invariants(&te.env, &te.pool, &te.pool_id, &te.usdc_id);
+        te.pool.withdraw(&lp2, &amount2);
+        assert_invariants(&te.env, &te.pool, &te.pool_id, &te.usdc_id);
+
+        let f = te.pool.get_stats();
+        assert_eq!(f.total_deposits, 0);
+        assert_eq!(f.total_shares, 0);
+    }
+
+    #[test]
+    fn prop_invariant_fund_then_default(deposit in 10_000_000_000u128..100_000_000_000u128) {
+        let te = setup();
+
+        te.pool.deposit(&te.lp, &deposit);
+        assert_invariants(&te.env, &te.pool, &te.pool_id, &te.usdc_id);
+
+        let invoice_id = create_and_list(&te, &te.usdc_id);
+        te.pool.fund_invoice(&invoice_id);
+        assert_invariants(&te.env, &te.pool, &te.pool_id, &te.usdc_id);
+
+        te.pool.handle_default(&invoice_id);
+        assert_invariants(&te.env, &te.pool, &te.pool_id, &te.usdc_id);
+
+        let stats = te.pool.get_stats();
+        assert_eq!(stats.total_funded, 0);
+        assert_eq!(stats.active_invoice_count, 0);
+    }
+
+    #[test]
+    fn prop_invariant_full_lifecycle(deposit in 10_000_000_000u128..100_000_000_000u128) {
+        let te = setup();
+
+        // deposit
+        te.pool.deposit(&te.lp, &deposit);
+        assert_invariants(&te.env, &te.pool, &te.pool_id, &te.usdc_id);
+
+        // fund invoice
+        let inv1 = create_and_list(&te, &te.usdc_id);
+        te.pool.fund_invoice(&inv1);
+        assert_invariants(&te.env, &te.pool, &te.pool_id, &te.usdc_id);
+
+        // repay invoice
+        te.invoice.mark_shipped(&inv1);
+        te.invoice.confirm_delivery(&inv1, &te.issuer);
+        te.invoice.confirm_delivery(&inv1, &te.buyer);
+        te.invoice.repay(&inv1);
+        assert_invariants(&te.env, &te.pool, &te.pool_id, &te.usdc_id);
+
+        // fund another invoice
+        let inv2 = create_and_list(&te, &te.usdc_id);
+        te.pool.fund_invoice(&inv2);
+        assert_invariants(&te.env, &te.pool, &te.pool_id, &te.usdc_id);
+
+        // default
+        te.pool.handle_default(&inv2);
+        assert_invariants(&te.env, &te.pool, &te.pool_id, &te.usdc_id);
+
+        // withdraw all
+        let shares = te.pool.get_lp_position(&te.lp).shares;
+        te.pool.withdraw(&te.lp, &shares);
+        assert_invariants(&te.env, &te.pool, &te.pool_id, &te.usdc_id);
+
+        let f = te.pool.get_stats();
+        assert_eq!(f.total_deposits, 0);
+        assert_eq!(f.total_shares, 0);
+    }
+
+    #[test]
+    fn prop_invariant_multi_invoice_mixed_lifecycle(
+        deposit in 30_000_000_000u128..100_000_000_000u128,
+    ) {
+        let te = setup();
+
+        te.pool.deposit(&te.lp, &deposit);
+        assert_invariants(&te.env, &te.pool, &te.pool_id, &te.usdc_id);
+
+        let inv1 = create_and_list(&te, &te.usdc_id);
+        let inv2 = create_and_list(&te, &te.usdc_id);
+        te.pool.fund_invoice(&inv1);
+        assert_invariants(&te.env, &te.pool, &te.pool_id, &te.usdc_id);
+        te.pool.fund_invoice(&inv2);
+        assert_invariants(&te.env, &te.pool, &te.pool_id, &te.usdc_id);
+
+        // repay inv1
+        te.invoice.mark_shipped(&inv1);
+        te.invoice.confirm_delivery(&inv1, &te.issuer);
+        te.invoice.confirm_delivery(&inv1, &te.buyer);
+        te.invoice.repay(&inv1);
+        assert_invariants(&te.env, &te.pool, &te.pool_id, &te.usdc_id);
+
+        // default inv2
+        te.pool.handle_default(&inv2);
+        assert_invariants(&te.env, &te.pool, &te.pool_id, &te.usdc_id);
+
+        assert_eq!(te.pool.get_stats().active_invoice_count, 0);
+        assert_eq!(te.pool.get_stats().total_funded, 0);
+    }
+}
+
 // ============== MIXED SCENARIO TESTS ==============
 
 #[test]
@@ -918,4 +1172,55 @@ fn test_full_lifecycle_multiple_invoices() {
     assert_eq!(pos.shares, 100_000_000_000);
     assert_eq!(pos.usdc_value, 90_600_000_000);
     assert_eq!(pos.yield_earned, 0);
+}
+
+// ============== UNINITIALIZED CONTRACT TESTS ==============
+
+#[test]
+#[should_panic(expected = "Error(Contract, #14)")]
+fn test_uninitialized_pool_get_usdc_asset() {
+    let env = Env::default();
+    let pool_id = env.register_contract(None, PoolContract);
+    let pool = PoolContractClient::new(&env, &pool_id);
+    pool.get_usdc_asset();
+}
+
+#[test]
+#[should_panic(expected = "Error(Contract, #14)")]
+fn test_uninitialized_pool_deposit() {
+    let env = Env::default();
+    env.mock_all_auths();
+    let lp = Address::generate(&env);
+    let pool_id = env.register_contract(None, PoolContract);
+    let pool = PoolContractClient::new(&env, &pool_id);
+    pool.deposit(&lp, &1000);
+}
+
+#[test]
+#[should_panic(expected = "Error(Contract, #14)")]
+fn test_uninitialized_pool_fund_invoice() {
+    let env = Env::default();
+    env.mock_all_auths();
+    let pool_id = env.register_contract(None, PoolContract);
+    let pool = PoolContractClient::new(&env, &pool_id);
+    let dummy_id = BytesN::from_array(&env, &[0u8; 32]);
+    pool.fund_invoice(&dummy_id);
+}
+
+#[test]
+#[should_panic(expected = "Error(Contract, #14)")]
+fn test_uninitialized_pool_receive_repayment() {
+    let env = Env::default();
+    env.mock_all_auths();
+    let pool_id = env.register_contract(None, PoolContract);
+    let pool = PoolContractClient::new(&env, &pool_id);
+    let dummy_id = BytesN::from_array(&env, &[0u8; 32]);
+    pool.receive_repayment(&dummy_id, &1000);
+}
+
+#[test]
+fn test_initialized_pool_get_usdc_asset_succeeds() {
+    let te = setup();
+    let asset = te.pool.get_usdc_asset();
+    assert_eq!(asset, te.usdc_id);
 }

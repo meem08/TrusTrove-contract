@@ -520,3 +520,17 @@ fn prop_re_verify_after_revoke_restores_verified_state() {
         })
         .unwrap();
 }
+
+#[test]
+#[should_panic(expected = "Error(Contract, #5)")]
+fn test_batch_register_issuers_exceeds_limit() {
+    let (env, client) = setup();
+    let admin = Address::generate(&env);
+    client.initialize(&admin);
+    let mut entries = Vec::new(&env);
+    for _ in 0..51 {
+        let address = Address::generate(&env);
+        entries.push_back((address, map![&env]));
+    }
+    client.batch_register_issuers(&entries);
+}

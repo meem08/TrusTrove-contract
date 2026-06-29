@@ -170,12 +170,15 @@ impl InvoiceContract {
         // let invoice_id = client.create(&issuer, &buyer, 1_000, 1_000_000, &asset);
         // ```
         issuer.require_auth();
+        if issuer == buyer {
+            panic_with_error!(&env, InvoiceError::IssuerIsBuyer);
+        }
 
         let registry_id: Address = env
             .storage()
             .instance()
             .get(&DataKey::RegistryContract)
-            .unwrap();
+            .unwrap_or_else(|| panic_with_error!(&env, InvoiceError::NotInitialized));
 
         let mut args = Vec::new(&env);
         args.push_back(issuer.clone().into_val(&env));
@@ -208,7 +211,11 @@ impl InvoiceContract {
             panic_with_error!(&env, InvoiceError::InvalidDueDate);
         }
 
-        let counter: u64 = env.storage().instance().get(&DataKey::Counter).unwrap();
+        let counter: u64 = env
+            .storage()
+            .instance()
+            .get(&DataKey::Counter)
+            .unwrap_or_else(|| panic_with_error!(&env, InvoiceError::NotInitialized));
         let next_counter = counter + 1;
         env.storage()
             .instance()
@@ -762,7 +769,7 @@ impl InvoiceContract {
                 .storage()
                 .persistent()
                 .get(&DataKey::StatusIndexEntry(status_u32, i))
-                .unwrap();
+                .unwrap_or_else(|| panic_with_error!(&env, InvoiceError::NotFound));
             // O(1) membership check instead of loading full invoice
             let is_member: bool = env
                 .storage()
@@ -774,7 +781,7 @@ impl InvoiceContract {
                     .storage()
                     .persistent()
                     .get(&DataKey::Invoice(id))
-                    .unwrap();
+                    .unwrap_or_else(|| panic_with_error!(&env, InvoiceError::NotFound));
                 if invoice.status == status {
                     result.push_back(invoice);
                 }
@@ -796,12 +803,12 @@ impl InvoiceContract {
                 .storage()
                 .persistent()
                 .get(&DataKey::IssuerIndexEntry(address.clone(), i))
-                .unwrap();
+                .unwrap_or_else(|| panic_with_error!(&env, InvoiceError::NotFound));
             let invoice: Invoice = env
                 .storage()
                 .persistent()
                 .get(&DataKey::Invoice(id))
-                .unwrap();
+                .unwrap_or_else(|| panic_with_error!(&env, InvoiceError::NotFound));
             result.push_back(invoice);
         }
         result
@@ -820,12 +827,12 @@ impl InvoiceContract {
                 .storage()
                 .persistent()
                 .get(&DataKey::BuyerIndexEntry(address.clone(), i))
-                .unwrap();
+                .unwrap_or_else(|| panic_with_error!(&env, InvoiceError::NotFound));
             let invoice: Invoice = env
                 .storage()
                 .persistent()
                 .get(&DataKey::Invoice(id))
-                .unwrap();
+                .unwrap_or_else(|| panic_with_error!(&env, InvoiceError::NotFound));
             result.push_back(invoice);
         }
         result
@@ -939,8 +946,14 @@ fn extend_status_index(env: &Env, status: InvoiceStatus, invoice_id: &BytesN<32>
     let count_key = DataKey::StatusIndexCount(status_u32);
     let count: u32 = env.storage().persistent().get(&count_key).unwrap_or(0);
     let entry_key = DataKey::StatusIndexEntry(status_u32, count);
-    persistent_set(env, &entry_key, invoice_id);
-    persistent_set(env, &count_key, &(count + 1));
+    env.storage().persistent().set(&entry_key, invoice_id);
+    env.storage()
+        .persistent()
+        .extend_ttl(&entry_key, 100, 2_000_000);
+    env.storage().persistent().set(&count_key, &(count + 1));
+    env.storage()
+        .persistent()
+        .extend_ttl(&count_key, 100, 2_000_000);
 }
 
 fn move_status_index(env: &Env, invoice_id: &BytesN<32>, from: InvoiceStatus, to: InvoiceStatus) {
