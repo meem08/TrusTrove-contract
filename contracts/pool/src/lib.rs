@@ -198,12 +198,12 @@ impl PoolContract {
         }
 
         let lp_shares_key = DataKey::LPShares(lp.clone());
-        let lp_shares: u128 = env
+        let original_lp_shares: u128 = env
             .storage()
             .persistent()
             .get(&lp_shares_key)
             .unwrap_or_else(|| panic_with_error!(&env, PoolError::NoShares));
-        if shares > lp_shares {
+        if shares > original_lp_shares {
             panic_with_error!(&env, PoolError::InsufficientShares);
         }
 
@@ -251,13 +251,13 @@ impl PoolContract {
             .instance()
             .set(&DataKey::TotalDeposits, &(total_deposits - usdc_to_return));
 
-        persistent_set(&env, &lp_shares_key, &(lp_shares - shares));
+        persistent_set(&env, &lp_shares_key, &(original_lp_shares - shares));
 
         let init_dep_key = DataKey::LPInitialDeposit(lp.clone());
         let init_dep: u128 = env.storage().persistent().get(&init_dep_key).unwrap_or(0);
         let principal_portion = shares
             .checked_mul(init_dep)
-            .and_then(|v| v.checked_div(lp_shares))
+            .and_then(|v| v.checked_div(original_lp_shares))
             .unwrap_or_else(|| panic_with_error!(&env, PoolError::Overflow));
         let yield_earned = usdc_to_return.saturating_sub(principal_portion);
 
