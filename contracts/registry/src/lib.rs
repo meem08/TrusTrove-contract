@@ -115,6 +115,8 @@ impl RegistryContract {
             registered += 1;
         }
 
+        events::batch_registered(&env, registered, skipped.len() as u32);
+
         if registered > 0 {
             Self::extend_instance_ttl(&env);
         }
