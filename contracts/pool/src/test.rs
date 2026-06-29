@@ -4,7 +4,7 @@ use soroban_sdk::{
     contract, contractimpl, contracttype, testutils::Address as _, Address, BytesN, Env,
 };
 
-use crate::{PoolContract, PoolContractClient};
+use crate::{DataKey, PoolContract, PoolContractClient};
 
 use trusttrove_escrow::{EscrowContract as RealEscrow, EscrowContractClient as RealEscrowClient};
 use trusttrove_invoice::{
@@ -67,6 +67,7 @@ pub struct TKey(Address);
 struct TestEnv {
     env: Env,
     pool: PoolContractClient<'static>,
+    pool_id: Address,
     invoice: RealInvoiceClient<'static>,
     usdc_id: Address,
     xlm_id: Address,
@@ -139,6 +140,7 @@ fn setup() -> TestEnv {
     TestEnv {
         env,
         pool,
+        pool_id,
         invoice,
         usdc_id,
         xlm_id,
@@ -351,6 +353,25 @@ fn test_lp_position_after_deposit() {
     assert_eq!(pos.shares, 50_000_000_000);
     assert_eq!(pos.usdc_value, 50_000_000_000);
     assert_eq!(pos.deposit_count, 1);
+}
+
+#[test]
+#[should_panic(expected = "Error(Contract, #13)")]
+fn test_lp_position_overflow_panics() {
+    let te = setup();
+    let env = &te.env;
+    let pool_id = &te.pool_id;
+    let lp = &te.lp;
+    env.as_contract(pool_id, || {
+        env.storage().instance().set(&DataKey::TotalShares, &1u128);
+        env.storage()
+            .instance()
+            .set(&DataKey::TotalDeposits, &u128::MAX);
+        env.storage()
+            .persistent()
+            .set(&DataKey::LPShares(lp.clone()), &2u128);
+    });
+    te.pool.get_lp_position(&te.lp);
 }
 
 // ============== UTILIZATION RATE TESTS ==============

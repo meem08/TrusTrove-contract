@@ -642,7 +642,7 @@ impl PoolContract {
             lp_shares
                 .checked_mul(total_deposits)
                 .and_then(|v| v.checked_div(total_shares))
-                .unwrap_or(0)
+                .unwrap_or_else(|| panic_with_error!(&env, PoolError::Overflow))
         } else {
             0
         };
