@@ -681,7 +681,7 @@ impl InvoiceContract {
             .try_invoke_contract::<(), soroban_sdk::Error>(
                 &env.current_contract_address(),
                 &Symbol::new(&env, "check_auth"),
-                (invoice.issuer.clone(),),
+                (invoice.issuer.clone(),).into_val(&env),
             )
             .is_ok();
 
