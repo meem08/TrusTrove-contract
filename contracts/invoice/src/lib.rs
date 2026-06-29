@@ -930,7 +930,7 @@ impl InvoiceContract {
         for status in statuses {
             let key = String::from_str(&env, status.as_str());
             let value = read_status_count(&env, status);
-            counts.set(&key, &value);
+            counts.set(key, value);
         }
         counts
     }
