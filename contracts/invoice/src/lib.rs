@@ -760,28 +760,33 @@ impl InvoiceContract {
             .get(&DataKey::StatusIndexCount(status_u32))
             .unwrap_or(0);
         let mut result: Vec<Invoice> = Vec::new(&env);
-        let end = core::cmp::min(offset.saturating_add(limit), count);
-        for i in offset..end {
+        let mut active_seen: u32 = 0;
+        for i in 0..count {
             let id: BytesN<32> = env
                 .storage()
                 .persistent()
                 .get(&DataKey::StatusIndexEntry(status_u32, i))
                 .unwrap_or_else(|| panic_with_error!(&env, InvoiceError::NotFound));
-            // O(1) membership check instead of loading full invoice
             let is_member: bool = env
                 .storage()
                 .persistent()
                 .get(&DataKey::StatusMembership(status_u32, id.clone()))
                 .unwrap_or(false);
             if is_member {
-                let invoice: Invoice = env
-                    .storage()
-                    .persistent()
-                    .get(&DataKey::Invoice(id))
-                    .unwrap_or_else(|| panic_with_error!(&env, InvoiceError::NotFound));
-                if invoice.status == status {
-                    result.push_back(invoice);
+                if active_seen >= offset {
+                    let invoice: Invoice = env
+                        .storage()
+                        .persistent()
+                        .get(&DataKey::Invoice(id))
+                        .unwrap_or_else(|| panic_with_error!(&env, InvoiceError::NotFound));
+                    if invoice.status == status {
+                        result.push_back(invoice);
+                        if result.len() >= limit as usize {
+                            break;
+                        }
+                    }
                 }
+                active_seen += 1;
             }
         }
         result
