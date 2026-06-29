@@ -478,3 +478,25 @@ fn prop_history_length_grows_with_each_operation() {
         })
         .unwrap();
 }
+
+// ============== UNINITIALIZED CONTRACT TESTS ==============
+
+#[test]
+#[should_panic(expected = "Error(Contract, #6)")]
+fn test_uninitialized_escrow_lock() {
+    let env = Env::default();
+    env.mock_all_auths();
+    let contract_id = env.register_contract(None, EscrowContract);
+    let client = EscrowContractClient::new(&env, &contract_id);
+    let invoice_id = generate_invoice_id(&env);
+    client.lock(&invoice_id, &1000);
+}
+
+#[test]
+fn test_initialized_escrow_lock_succeeds() {
+    let (env, client, _admin, _pool, _usdc) = setup();
+    let invoice_id = generate_invoice_id(&env);
+    let result = client.lock(&invoice_id, &1000);
+    assert!(result);
+    assert_eq!(client.get_locked(&invoice_id), 1000);
+}
