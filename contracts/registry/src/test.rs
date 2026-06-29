@@ -126,7 +126,7 @@ fn test_update_metadata_unregistered_panics() {
 }
 
 #[test]
-#[should_panic(expected = "Error(Contract, #4)")]
+#[should_panic(expected = "Error(Auth, InvalidAction)")]
 fn test_update_metadata_wrong_auth_panics() {
     let env = Env::default();
     let contract_id = env.register_contract(None, RegistryContract);
