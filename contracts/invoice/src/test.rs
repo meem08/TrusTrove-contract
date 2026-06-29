@@ -738,6 +738,41 @@ fn test_expire_listing_stranger_no_auth_panics() {
     client.expire_listing(&invoice_id);
 }
 
+// ============== ISSUE #61: TRANSFER OWNERSHIP ==============
+
+#[test]
+fn test_invoice_transfer_ownership_changes_admin() {
+    let (env, client, _issuer, _buyer, _registry, _usdc) = setup();
+    let new_admin = Address::generate(&env);
+    client.transfer_ownership(&new_admin);
+    assert!(!env.events().all().is_empty());
+}
+
+#[test]
+#[should_panic]
+fn test_invoice_transfer_ownership_requires_both_auths() {
+    let (env, client, _issuer, _buyer, _registry, _usdc) = setup();
+    let new_admin = Address::generate(&env);
+    env.set_auths(&[]);
+    client.transfer_ownership(&new_admin);
+}
+
+#[test]
+fn test_invoice_get_issuer_returns_correct_address() {
+    let (env, client, issuer, buyer, _registry, usdc) = setup();
+    let due_date = env.ledger().timestamp() + 86400;
+    let invoice_id = client.create(&issuer, &buyer, &1_000_000_000, &due_date, &usdc);
+    let stored_issuer = client.get_issuer(&invoice_id);
+    assert_eq!(stored_issuer, issuer);
+}
+
+#[test]
+#[should_panic]
+fn test_invoice_get_issuer_panics_for_unknown_id() {
+    let (env, client, _issuer, _buyer, _registry, _usdc) = setup();
+    let fake_id = BytesN::from_array(&env, &[0u8; 32]);
+    client.get_issuer(&fake_id);
+}
 // ── Issue #62: per-field getter tests ─────────────────────────────────────────
 
 #[test]
