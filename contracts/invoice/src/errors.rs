@@ -17,4 +17,7 @@ pub enum InvoiceError {
     InsufficientRepayment = 12,
     UnsupportedAsset = 13,
     ListingNotExpired = 14,
+    UnauthorizedPool = 15,
+    RepaymentFailed = 16,
+    NotInitialized = 17,
 }
