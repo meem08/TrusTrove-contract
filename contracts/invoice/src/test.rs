@@ -998,6 +998,14 @@ fn test_create_succeeds_with_supported_asset() {
 }
 
 #[test]
+#[should_panic(expected = "Error(Contract, #18)")]
+fn test_create_fails_when_issuer_is_buyer() {
+    let (env, client, issuer, _, _, usdc) = setup();
+    let due_date = env.ledger().timestamp() + 86400;
+    client.create(&issuer, &issuer, &1_000_000_000, &due_date, &usdc);
+}
+
+#[test]
 fn test_add_then_remove_then_create_fails() {
     let (env, client, issuer, buyer, _, _) = setup();
     let due_date = env.ledger().timestamp() + 86400;

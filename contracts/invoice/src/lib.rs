@@ -174,6 +174,9 @@ impl InvoiceContract {
         // let invoice_id = client.create(&issuer, &buyer, 1_000, 1_000_000, &asset);
         // ```
         issuer.require_auth();
+        if issuer == buyer {
+            panic_with_error!(&env, InvoiceError::IssuerIsBuyer);
+        }
 
         let registry_id: Address = env
             .storage()

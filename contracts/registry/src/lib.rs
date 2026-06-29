@@ -85,6 +85,10 @@ impl RegistryContract {
         env: Env,
         entries: Vec<(Address, Map<String, String>)>,
     ) -> Vec<Address> {
+        if entries.len() > 50 {
+            panic_with_error!(&env, RegistryError::BatchSizeExceeded);
+        }
+
         let admin: Address = env
             .storage()
             .instance()
