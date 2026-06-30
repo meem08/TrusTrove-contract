@@ -20,4 +20,5 @@ pub enum InvoiceError {
     UnauthorizedPool = 15,
     RepaymentFailed = 16,
     NotInitialized = 17,
+    IssuerIsBuyer = 18,
 }
