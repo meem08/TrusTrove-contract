@@ -598,6 +598,34 @@ fn test_handle_default() {
 }
 
 #[test]
+fn test_handle_default_preserves_share_price() {
+    let te = setup();
+    te.pool.deposit(&te.lp, &100_000_000_000);
+    let invoice_id = create_and_list(&te, &te.usdc_id);
+    te.pool.fund_invoice(&invoice_id);
+
+    let lp_before = te.pool.get_lp_position(&te.lp);
+    let pool_before = te.pool.get_stats();
+
+    assert_eq!(pool_before.total_deposits, 100_000_000_000);
+    assert_eq!(pool_before.total_shares, 100_000_000_000);
+    assert_eq!(lp_before.usdc_value, 100_000_000_000);
+
+    let result = te.pool.handle_default(&invoice_id);
+    assert!(result);
+
+    let lp_after = te.pool.get_lp_position(&te.lp);
+    let pool_after = te.pool.get_stats();
+
+    assert_eq!(pool_after.total_deposits, pool_before.total_deposits);
+    assert_eq!(pool_after.total_shares, pool_before.total_shares);
+    assert_eq!(lp_after.shares, lp_before.shares);
+    assert_eq!(lp_after.usdc_value, lp_before.usdc_value);
+    assert_eq!(pool_after.total_funded, 0);
+    assert_eq!(pool_after.active_invoice_count, 0);
+}
+
+#[test]
 fn test_handle_default_unknown_invoice_returns_false() {
     let te = setup();
     let dummy_id = BytesN::from_array(&te.env, &[0u8; 32]);
