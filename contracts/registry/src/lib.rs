@@ -42,6 +42,12 @@ impl RegistryContract {
 
     /// Registers a new issuer profile with initial metadata.
     ///
+    /// Newly registered profiles start with `verified: false`. The admin must
+    /// explicitly call `verify_profile(&address, &true)` before the profile is
+    /// considered verified (see issue #130). This prevents self-registered
+    /// users from bypassing the verification gate and immediately creating
+    /// invoices on the InvoiceContract.
+    ///
     /// # Arguments
     /// * `env` - The Soroban environment.
     /// * `address` - The issuer address to register.
@@ -69,7 +75,7 @@ impl RegistryContract {
         let profile = Profile {
             address: address.clone(),
             role: Role::Issuer,
-            verified: true,
+            verified: false,
             registered_at: env.ledger().timestamp(),
             metadata,
         };
@@ -109,7 +115,7 @@ impl RegistryContract {
             let profile = Profile {
                 address: address.clone(),
                 role: Role::Issuer,
-                verified: true,
+                verified: false,
                 registered_at: env.ledger().timestamp(),
                 metadata,
             };
@@ -128,6 +134,11 @@ impl RegistryContract {
     }
 
     /// Registers a new buyer profile with initial metadata.
+    ///
+    /// Newly registered profiles start with `verified: false`. The admin must
+    /// explicitly call `verify_profile(&address, &true)` before the profile is
+    /// considered verified (see issue #130). This prevents self-registered
+    /// buyers from bypassing the verification gate.
     ///
     /// # Arguments
     /// * `env` - The Soroban environment.
@@ -156,7 +167,7 @@ impl RegistryContract {
         let profile = Profile {
             address: address.clone(),
             role: Role::Buyer,
-            verified: true,
+            verified: false,
             registered_at: env.ledger().timestamp(),
             metadata,
         };
@@ -249,7 +260,7 @@ impl RegistryContract {
         {
             None => VerificationStatus::Unregistered,
             Some(p) if p.verified => VerificationStatus::Verified,
-            Some(_) => VerificationStatus::Revoked,
+            Some(_) => VerificationStatus::Unverified,
         }
     }
 

@@ -22,7 +22,27 @@ impl MockRegistry {
             .unwrap_or(false)
     }
 
+    /// Register the profile in the mock registry.
+    ///
+    /// Mirrors the production `register_issuer` / `register_buyer` introduced
+    /// by issue #130: a freshly registered profile is NOT verified. The test
+    /// setup helpers (`setup`, `setup_with_admin`) explicitly call
+    /// `verify_admin` after `register` for parties that need to pass the
+    /// verification gate. Tests that want to exercise the
+    /// "unverified user cannot create an invoice" path simply omit the
+    /// `verify_admin` call.
     pub fn register(env: Env, address: Address) {
+        env.storage()
+            .persistent()
+            .set(&DataKey(address.clone()), &false);
+        env.storage()
+            .persistent()
+            .extend_ttl(&DataKey(address), 100, 2_000_000);
+    }
+
+    /// Verifies the admin approval step on the mock registry. Mirrors the
+    /// production `verify_profile(&addr, &true)` flow.
+    pub fn verify_admin(env: Env, address: Address) {
         env.storage()
             .persistent()
             .set(&DataKey(address.clone()), &true);
@@ -79,7 +99,11 @@ fn setup() -> Setup {
     let issuer = Address::generate(&env);
     let buyer = Address::generate(&env);
     registry_client.register(&issuer);
+    // Issue #130: registration is no longer self-verifying. The admin
+    // must explicitly approve the profile before it can create invoices.
+    registry_client.verify_admin(&issuer);
     registry_client.register(&buyer);
+    registry_client.verify_admin(&buyer);
 
     let contract_id = env.register_contract(None, InvoiceContract);
     let client = InvoiceContractClient::new(&env, &contract_id);
@@ -103,7 +127,10 @@ fn setup_with_admin() -> SetupWithAdmin {
     let issuer = Address::generate(&env);
     let buyer = Address::generate(&env);
     registry_client.register(&issuer);
+    // Issue #130: admin verification is required after registration.
+    registry_client.verify_admin(&issuer);
     registry_client.register(&buyer);
+    registry_client.verify_admin(&buyer);
 
     let contract_id = env.register_contract(None, InvoiceContract);
     let client = InvoiceContractClient::new(&env, &contract_id);
@@ -336,6 +363,8 @@ fn test_confirm_delivery_wrong_party_panics() {
     let stranger = Address::generate(&env);
     let buyer = Address::generate(&env);
     registry.register(&buyer);
+    // Issue #130: must be admin-verified before creating invoices.
+    registry.verify_admin(&buyer);
 
     let due_date = env.ledger().timestamp() + 86400;
     let invoice_id = client.create(&issuer, &buyer, &1_000_000_000, &due_date, &usdc);
@@ -521,7 +550,10 @@ fn test_expire_listing_unauthorized_caller_panics() {
     let issuer = Address::generate(&env);
     let buyer = Address::generate(&env);
     registry_client.register(&issuer);
+    // Issue #130: admin must verify registered users before they can create invoices.
+    registry_client.verify_admin(&issuer);
     registry_client.register(&buyer);
+    registry_client.verify_admin(&buyer);
 
     let contract_id = env.register_contract(None, InvoiceContract);
     let client = InvoiceContractClient::new(&env, &contract_id);
@@ -679,7 +711,10 @@ fn test_expire_listing_stranger_no_auth_panics() {
     let issuer = Address::generate(&env);
     let buyer = Address::generate(&env);
     registry_client.register(&issuer);
+    // Issue #130: admin must verify both parties before invoices.
+    registry_client.verify_admin(&issuer);
     registry_client.register(&buyer);
+    registry_client.verify_admin(&buyer);
 
     let contract_id = env.register_contract(None, InvoiceContract);
     let client = InvoiceContractClient::new(&env, &contract_id);
@@ -830,6 +865,8 @@ fn test_invoice_ids_unique_for_different_buyers() {
     let (env, client, issuer, buyer, registry, usdc) = setup();
     let buyer2 = Address::generate(&env);
     registry.register(&buyer2);
+    // Issue #130: admin verification required before invoice creation.
+    registry.verify_admin(&buyer2);
 
     let due_date = env.ledger().timestamp() + 86400;
     let id1 = client.create(&issuer, &buyer, &1_000_000_000, &due_date, &usdc);
@@ -1139,7 +1176,10 @@ fn test_uninitialized_invoice_create() {
     let issuer = Address::generate(&env);
     let buyer = Address::generate(&env);
     registry_client.register(&issuer);
+    // Issue #130: admin must verify registered users.
+    registry_client.verify_admin(&issuer);
     registry_client.register(&buyer);
+    registry_client.verify_admin(&buyer);
 
     let contract_id = env.register_contract(None, InvoiceContract);
     let client = InvoiceContractClient::new(&env, &contract_id);
@@ -1161,6 +1201,203 @@ fn test_initialized_invoice_create_succeeds() {
     let due_date = env.ledger().timestamp() + 86400;
     let invoice_id = client.create(&issuer, &buyer, &1000, &due_date, &usdc);
     let invoice = client.get(&invoice_id);
+    assert_eq!(invoice.issuer, issuer);
+    assert_eq!(invoice.buyer, buyer);
+}
+
+// ============== ISSUE #130: UNVERIFIED USERS CANNOT CREATE INVOICES ==============
+//
+// Acceptance criteria: "Unit tests verify that unverified users cannot create
+// invoices." The MockRegistry's `register` no longer auto-verifies (mirroring the
+// production fix), so a freshly registered profile must NOT pass the verification
+// gate in `InvoiceContract::create`. Only an explicit `verify_admin` should
+// unlock the create path.
+
+#[test]
+#[should_panic(expected = "Error(Contract, #4)")] // InvoiceError::IssuerNotVerified
+fn test_create_fails_when_issuer_is_unverified() {
+    let env = Env::default();
+    env.mock_all_auths();
+
+    let registry_id = env.register_contract(None, MockRegistry);
+    let registry_client = MockRegistryClient::new(&env, &registry_id);
+
+    let issuer = Address::generate(&env);
+    let buyer = Address::generate(&env);
+    // Issue #130: registration is no longer self-verifying.
+    registry_client.register(&issuer);
+    // The buyer IS verified, mirroring an existing whitelisted user trying
+    // to transact with a freshly self-registered (still unverified) issuer.
+    registry_client.register(&buyer);
+    registry_client.verify_admin(&buyer);
+
+    let contract_id = env.register_contract(None, InvoiceContract);
+    let client = InvoiceContractClient::new(&env, &contract_id);
+
+    let admin = Address::generate(&env);
+    client.initialize(&admin, &registry_id);
+
+    let usdc = Address::generate(&env);
+    client.add_supported_asset(&usdc);
+    let due_date = env.ledger().timestamp() + 86400;
+
+    // Issuer is registered but not admin-verified — create must panic.
+    client.create(&issuer, &buyer, &1_000_000_000, &due_date, &usdc);
+}
+
+#[test]
+#[should_panic(expected = "Error(Contract, #5)")] // InvoiceError::BuyerNotVerified
+fn test_create_fails_when_buyer_is_unverified() {
+    let env = Env::default();
+    env.mock_all_auths();
+
+    let registry_id = env.register_contract(None, MockRegistry);
+    let registry_client = MockRegistryClient::new(&env, &registry_id);
+
+    let issuer = Address::generate(&env);
+    let buyer = Address::generate(&env);
+    // Issuer IS verified (legacy whitelisted), buyer is freshly registered
+    // and therefore unverified per issue #130.
+    registry_client.register(&issuer);
+    registry_client.verify_admin(&issuer);
+    registry_client.register(&buyer);
+    // Intentionally do NOT verify_admin(&buyer).
+
+    let contract_id = env.register_contract(None, InvoiceContract);
+    let client = InvoiceContractClient::new(&env, &contract_id);
+
+    let admin = Address::generate(&env);
+    client.initialize(&admin, &registry_id);
+
+    let usdc = Address::generate(&env);
+    client.add_supported_asset(&usdc);
+    let due_date = env.ledger().timestamp() + 86400;
+
+    // Buyer is unverified — create must panic.
+    client.create(&issuer, &buyer, &1_000_000_000, &due_date, &usdc);
+}
+
+#[test]
+#[should_panic(expected = "Error(Contract, #4)")] // InvoiceError::IssuerNotVerified
+fn test_create_fails_when_both_parties_are_unverified() {
+    // Defensive: even when both parties bypass admin verification, the gate
+    // still triggers on whichever check runs first (issuer, then buyer).
+    let env = Env::default();
+    env.mock_all_auths();
+
+    let registry_id = env.register_contract(None, MockRegistry);
+    let registry_client = MockRegistryClient::new(&env, &registry_id);
+
+    let issuer = Address::generate(&env);
+    let buyer = Address::generate(&env);
+    registry_client.register(&issuer);
+    registry_client.register(&buyer);
+    // Neither is verified.
+
+    let contract_id = env.register_contract(None, InvoiceContract);
+    let client = InvoiceContractClient::new(&env, &contract_id);
+
+    let admin = Address::generate(&env);
+    client.initialize(&admin, &registry_id);
+
+    let usdc = Address::generate(&env);
+    client.add_supported_asset(&usdc);
+    let due_date = env.ledger().timestamp() + 86400;
+
+    client.create(&issuer, &buyer, &1_000_000_000, &due_date, &usdc);
+}
+
+#[test]
+#[should_panic(expected = "Error(Contract, #4)")] // InvoiceError::IssuerNotVerified
+fn test_create_fails_after_only_buyer_verified() {
+    // Issue #130: when only the buyer is verified but the issuer is not,
+    // the issuer check fires first and create() must panic.
+    let env = Env::default();
+    env.mock_all_auths();
+
+    let registry_id = env.register_contract(None, MockRegistry);
+    let registry_client = MockRegistryClient::new(&env, &registry_id);
+
+    let issuer = Address::generate(&env);
+    let buyer = Address::generate(&env);
+    registry_client.register(&issuer);
+    registry_client.register(&buyer);
+    registry_client.verify_admin(&buyer); // buyer verified, issuer NOT
+
+    let contract_id = env.register_contract(None, InvoiceContract);
+    let client = InvoiceContractClient::new(&env, &contract_id);
+
+    let admin = Address::generate(&env);
+    client.initialize(&admin, &registry_id);
+
+    let usdc = Address::generate(&env);
+    client.add_supported_asset(&usdc);
+    let due_date = env.ledger().timestamp() + 86400;
+
+    client.create(&issuer, &buyer, &1_000_000_000, &due_date, &usdc);
+}
+
+#[test]
+#[should_panic(expected = "Error(Contract, #5)")] // InvoiceError::BuyerNotVerified
+fn test_create_fails_after_only_issuer_verified() {
+    // Issue #130: when only the issuer is verified but the buyer is not,
+    // the issuer check passes and the buyer check fires second.
+    let env = Env::default();
+    env.mock_all_auths();
+
+    let registry_id = env.register_contract(None, MockRegistry);
+    let registry_client = MockRegistryClient::new(&env, &registry_id);
+
+    let issuer = Address::generate(&env);
+    let buyer = Address::generate(&env);
+    registry_client.register(&issuer);
+    registry_client.verify_admin(&issuer); // issuer verified, buyer NOT
+    registry_client.register(&buyer);
+
+    let contract_id = env.register_contract(None, InvoiceContract);
+    let client = InvoiceContractClient::new(&env, &contract_id);
+
+    let admin = Address::generate(&env);
+    client.initialize(&admin, &registry_id);
+
+    let usdc = Address::generate(&env);
+    client.add_supported_asset(&usdc);
+    let due_date = env.ledger().timestamp() + 86400;
+
+    client.create(&issuer, &buyer, &1_000_000_000, &due_date, &usdc);
+}
+
+#[test]
+fn test_create_succeeds_after_admin_verifies_both_parties() {
+    // Issue #130 accept path: once the admin verifies both parties,
+    // they can create invoices normally.
+    let env = Env::default();
+    env.mock_all_auths();
+
+    let registry_id = env.register_contract(None, MockRegistry);
+    let registry_client = MockRegistryClient::new(&env, &registry_id);
+
+    let issuer = Address::generate(&env);
+    let buyer = Address::generate(&env);
+    registry_client.register(&issuer);
+    registry_client.register(&buyer);
+    registry_client.verify_admin(&issuer);
+    registry_client.verify_admin(&buyer);
+
+    let contract_id = env.register_contract(None, InvoiceContract);
+    let client = InvoiceContractClient::new(&env, &contract_id);
+
+    let admin = Address::generate(&env);
+    client.initialize(&admin, &registry_id);
+
+    let usdc = Address::generate(&env);
+    client.add_supported_asset(&usdc);
+    let due_date = env.ledger().timestamp() + 86400;
+
+    let invoice_id =
+        client.create(&issuer, &buyer, &1_000_000_000, &due_date, &usdc);
+    let invoice = client.get(&invoice_id);
+    assert_eq!(invoice.status, InvoiceStatus::Created);
     assert_eq!(invoice.issuer, issuer);
     assert_eq!(invoice.buyer, buyer);
 }

@@ -38,7 +38,8 @@ fn test_register_issuer() {
     assert!(result);
     let profile = client.get_profile(&issuer);
     assert_eq!(profile.role, crate::Role::Issuer);
-    assert!(profile.verified);
+    // Newly registered profiles must start unverified (issue #130).
+    assert!(!profile.verified);
 }
 
 #[test]
@@ -52,17 +53,50 @@ fn test_register_buyer() {
     assert!(result);
     let profile = client.get_profile(&buyer);
     assert_eq!(profile.role, crate::Role::Buyer);
-    assert!(profile.verified);
+    // Newly registered profiles must start unverified (issue #130).
+    assert!(!profile.verified);
 }
 
 #[test]
-fn test_is_verified_returns_true_for_registered() {
+fn test_is_verified_returns_false_for_unverified_registered() {
+    // Issue #130: freshly self-registered profiles are NOT verified,
+    // so `is_verified` must return false until the admin explicitly
+    // calls `verify_profile`.
     let (env, client) = setup();
     let admin = Address::generate(&env);
     client.initialize(&admin);
     let issuer = Address::generate(&env);
     client.register_issuer(&issuer, &map![&env]);
+    assert!(!client.is_verified(&issuer));
+    // Admin verification is required to flip `is_verified` to true.
+    assert!(client.verify_profile(&issuer, &true));
     assert!(client.is_verified(&issuer));
+}
+
+#[test]
+fn test_batch_registered_users_require_explicit_verification() {
+    // Issue #130: users registered via `batch_register_issuers` must also
+    // start unverified.
+    let (env, client) = setup();
+    let admin = Address::generate(&env);
+    client.initialize(&admin);
+    let issuer1 = Address::generate(&env);
+    let issuer2 = Address::generate(&env);
+
+    let entries = vec![
+        &env,
+        (issuer1.clone(), map![&env]),
+        (issuer2.clone(), map![&env]),
+    ];
+    let _ = client.batch_register_issuers(&entries);
+
+    assert!(!client.is_verified(&issuer1));
+    assert!(!client.is_verified(&issuer2));
+    // Admin verification flips both to true.
+    assert!(client.verify_profile(&issuer1, &true));
+    assert!(client.verify_profile(&issuer2, &true));
+    assert!(client.is_verified(&issuer1));
+    assert!(client.is_verified(&issuer2));
 }
 
 #[test]
@@ -81,6 +115,10 @@ fn test_revoke_sets_verified_false() {
     client.initialize(&admin);
     let issuer = Address::generate(&env);
     client.register_issuer(&issuer, &map![&env]);
+    // Newly registered → unverified → revoke keeps it unverified, so
+    // explicitly verify first to make the revoke transition observable.
+    assert!(!client.is_verified(&issuer));
+    assert!(client.verify_profile(&issuer, &true));
     assert!(client.is_verified(&issuer));
     let result = client.revoke(&issuer);
     assert!(result);
@@ -251,9 +289,10 @@ fn test_batch_register_issuers_all_new() {
     let skipped = client.batch_register_issuers(&entries);
     assert_eq!(skipped.len(), 0);
 
-    assert!(client.is_verified(&issuer1));
-    assert!(client.is_verified(&issuer2));
-    assert!(client.is_verified(&issuer3));
+    // Issue #130: batch-registered profiles must also start unverified.
+    assert!(!client.is_verified(&issuer1));
+    assert!(!client.is_verified(&issuer2));
+    assert!(!client.is_verified(&issuer3));
 
     assert_eq!(client.get_profile(&issuer1).role, crate::Role::Issuer);
     assert_eq!(client.get_profile(&issuer2).role, crate::Role::Issuer);
@@ -291,7 +330,7 @@ fn test_batch_register_issuers_mixed() {
     let admin = Address::generate(&env);
     client.initialize(&admin);
 
-    let issuer1 = Address::generate(&env); // existing
+    let issuer1 = Address::generate(&env); // existing, already registered (unverified)
     let issuer2 = Address::generate(&env); // new
     let issuer3 = Address::generate(&env); // new
 
@@ -309,9 +348,10 @@ fn test_batch_register_issuers_mixed() {
     assert_eq!(skipped.len(), 1);
     assert!(skipped.contains(&issuer1));
 
-    assert!(client.is_verified(&issuer1));
-    assert!(client.is_verified(&issuer2));
-    assert!(client.is_verified(&issuer3));
+    // All addresses remain unverified after batch registration (issue #130).
+    assert!(!client.is_verified(&issuer1));
+    assert!(!client.is_verified(&issuer2));
+    assert!(!client.is_verified(&issuer3));
 }
 
 #[test]
@@ -322,6 +362,12 @@ fn test_verify_profile_updates_status() {
     let issuer = Address::generate(&env);
     client.register_issuer(&issuer, &map![&env]);
 
+    // Issue #130: freshly registered profiles are unverified.
+    assert!(!client.is_verified(&issuer));
+
+    // Admin verification flips it to verified.
+    let result = client.verify_profile(&issuer, &true);
+    assert!(result);
     assert!(client.is_verified(&issuer));
 
     // Revoke
@@ -362,12 +408,19 @@ fn test_get_verification_status_unregistered() {
 }
 
 #[test]
-fn test_get_verification_status_verified() {
+fn test_get_verification_status_unverified_for_newly_registered() {
+    // Issue #130: a freshly self-registered profile is `Unverified` until
+    // the admin calls `verify_profile(&addr, &true)`.
     let (env, client) = setup();
     let admin = Address::generate(&env);
     client.initialize(&admin);
     let issuer = Address::generate(&env);
     client.register_issuer(&issuer, &map![&env]);
+    assert_eq!(
+        client.get_verification_status(&issuer),
+        VerificationStatus::Unverified
+    );
+    client.verify_profile(&issuer, &true);
     assert_eq!(
         client.get_verification_status(&issuer),
         VerificationStatus::Verified
@@ -375,43 +428,58 @@ fn test_get_verification_status_verified() {
 }
 
 #[test]
-fn test_get_verification_status_revoked() {
+fn test_get_verification_status_verified() {
     let (env, client) = setup();
     let admin = Address::generate(&env);
     client.initialize(&admin);
     let issuer = Address::generate(&env);
     client.register_issuer(&issuer, &map![&env]);
-    client.revoke(&issuer);
+    client.verify_profile(&issuer, &true);
     assert_eq!(
         client.get_verification_status(&issuer),
-        VerificationStatus::Revoked
+        VerificationStatus::Verified
     );
 }
 
 #[test]
-fn test_get_verification_status_distinguishes_revoked_from_unregistered() {
+fn test_get_verification_status_unverified_after_revoke() {
+    let (env, client) = setup();
+    let admin = Address::generate(&env);
+    client.initialize(&admin);
+    let issuer = Address::generate(&env);
+    client.register_issuer(&issuer, &map![&env]);
+    client.verify_profile(&issuer, &true);
+    client.revoke(&issuer);
+    assert_eq!(
+        client.get_verification_status(&issuer),
+        VerificationStatus::Unverified
+    );
+}
+
+#[test]
+fn test_get_verification_status_distinguishes_unverified_from_unregistered() {
     let (env, client) = setup();
     let admin = Address::generate(&env);
     client.initialize(&admin);
 
     let never_registered = Address::generate(&env);
-    let revoked = Address::generate(&env);
+    let unverified = Address::generate(&env);
 
-    client.register_issuer(&revoked, &map![&env]);
-    client.revoke(&revoked);
+    client.register_issuer(&unverified, &map![&env]);
+    // No verify_profile call → freshly registered profile is unverified.
 
-    // is_verified returns false for both — indistinguishable
+    // is_verified returns false for both — indistinguishable.
     assert!(!client.is_verified(&never_registered));
-    assert!(!client.is_verified(&revoked));
+    assert!(!client.is_verified(&unverified));
 
-    // get_verification_status tells them apart
+    // get_verification_status tells them apart.
     assert_eq!(
         client.get_verification_status(&never_registered),
         VerificationStatus::Unregistered
     );
     assert_eq!(
-        client.get_verification_status(&revoked),
-        VerificationStatus::Revoked
+        client.get_verification_status(&unverified),
+        VerificationStatus::Unverified
     );
 }
 
@@ -422,10 +490,11 @@ fn test_get_verification_status_re_verified_returns_verified() {
     client.initialize(&admin);
     let issuer = Address::generate(&env);
     client.register_issuer(&issuer, &map![&env]);
+    client.verify_profile(&issuer, &true);
     client.revoke(&issuer);
     assert_eq!(
         client.get_verification_status(&issuer),
-        VerificationStatus::Revoked
+        VerificationStatus::Unverified
     );
     client.verify_profile(&issuer, &true);
     assert_eq!(
@@ -460,7 +529,8 @@ fn test_registry_transfer_ownership_requires_both_auths() {
 // ============== PROPERTY-BASED INVARIANT TESTS ==============
 
 #[test]
-fn prop_is_verified_always_consistent_with_get_verification_status_after_register() {
+fn prop_newly_registered_users_are_unverified_by_default() {
+    // Issue #130: every fresh registration must yield `verified=false`.
     let mut runner = TestRunner::new(ProptestConfig::with_cases(10));
     runner
         .run(&(0u32..=1u32), |_seed| {
@@ -471,15 +541,15 @@ fn prop_is_verified_always_consistent_with_get_verification_status_after_registe
             client.register_issuer(&address, &map![&env]);
             let verified = client.is_verified(&address);
             let status = client.get_verification_status(&address);
-            prop_assert!(verified);
-            prop_assert_eq!(status, VerificationStatus::Verified);
+            prop_assert!(!verified);
+            prop_assert_eq!(status, VerificationStatus::Unverified);
             Ok(())
         })
         .unwrap();
 }
 
 #[test]
-fn prop_revoke_always_sets_is_verified_false_and_status_revoked() {
+fn prop_revoke_always_sets_is_verified_false_and_status_unverified() {
     let mut runner = TestRunner::new(ProptestConfig::with_cases(10));
     runner
         .run(&(0u32..=1u32), |_seed| {
@@ -488,11 +558,12 @@ fn prop_revoke_always_sets_is_verified_false_and_status_revoked() {
             client.initialize(&admin);
             let address = Address::generate(&env);
             client.register_issuer(&address, &map![&env]);
+            client.verify_profile(&address, &true);
             client.revoke(&address);
             prop_assert!(!client.is_verified(&address));
             prop_assert_eq!(
                 client.get_verification_status(&address),
-                VerificationStatus::Revoked
+                VerificationStatus::Unverified
             );
             Ok(())
         })
@@ -528,10 +599,11 @@ fn prop_re_verify_after_revoke_restores_verified_state() {
             client.initialize(&admin);
             let address = Address::generate(&env);
             client.register_issuer(&address, &map![&env]);
+            client.verify_profile(&address, &true);
             client.revoke(&address);
             prop_assert_eq!(
                 client.get_verification_status(&address),
-                VerificationStatus::Revoked
+                VerificationStatus::Unverified
             );
             client.verify_profile(&address, &true);
             prop_assert!(client.is_verified(&address));
@@ -539,6 +611,30 @@ fn prop_re_verify_after_revoke_restores_verified_state() {
                 client.get_verification_status(&address),
                 VerificationStatus::Verified
             );
+            Ok(())
+        })
+        .unwrap();
+}
+
+#[test]
+fn prop_admin_verify_is_required_to_unlock_create_invoice() {
+    // Issue #130 invariant: an admin `verify_profile(&addr, &true)`
+    // call is the ONLY way to make `is_verified` return true. The
+    // registry must not auto-verify any freshly registered profile.
+    let mut runner = TestRunner::new(ProptestConfig::with_cases(10));
+    runner
+        .run(&(0u32..=1u32), |_seed| {
+            let (env, client) = setup();
+            let admin = Address::generate(&env);
+            client.initialize(&admin);
+            let issuer = Address::generate(&env);
+            client.register_issuer(&issuer, &map![&env]);
+            // Right after registration the user cannot pass the
+            // verification gate.
+            prop_assert!(!client.is_verified(&issuer));
+            // Admin must explicitly verify.
+            prop_assert!(client.verify_profile(&issuer, &true));
+            prop_assert!(client.is_verified(&issuer));
             Ok(())
         })
         .unwrap();

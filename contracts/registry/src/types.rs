@@ -10,9 +10,14 @@ pub enum Role {
 #[contracttype]
 #[derive(Clone, Debug, PartialEq)]
 pub enum VerificationStatus {
+    /// Address has no profile on record.
     Unregistered,
+    /// Address has an admin-verified profile.
     Verified,
-    Revoked,
+    /// Address has a profile that the admin has not (yet) verified, or has
+    /// explicitly revoked. Newly self-registered profiles start here until
+    /// an admin calls `verify_profile(&addr, &true)` (see issue #130).
+    Unverified,
 }
 
 #[contracttype]
