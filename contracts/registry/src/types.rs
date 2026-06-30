@@ -8,6 +8,14 @@ pub enum Role {
 }
 
 #[contracttype]
+#[derive(Clone, Debug, PartialEq)]
+pub enum VerificationStatus {
+    Unregistered,
+    Verified,
+    Revoked,
+}
+
+#[contracttype]
 #[derive(Clone, Debug)]
 pub struct Profile {
     pub address: Address,

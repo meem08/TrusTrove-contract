@@ -1,7 +1,7 @@
 use soroban_sdk::{contracttype, Address, BytesN};
 
 #[contracttype]
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Copy, Debug, PartialEq)]
 pub enum InvoiceStatus {
     Created,
     Listed,
@@ -10,6 +10,7 @@ pub enum InvoiceStatus {
     Confirmed,
     Repaid,
     Defaulted,
+    Expired,
 }
 
 #[contracttype]
@@ -24,6 +25,7 @@ pub struct Invoice {
     pub due_date: u64,
     pub status: InvoiceStatus,
     pub created_at: u64,
+    pub listed_at: Option<u64>,
     pub funded_at: Option<u64>,
     pub shipped_at: Option<u64>,
     pub issuer_confirmed: bool,
@@ -40,7 +42,18 @@ pub enum DataKey {
     PoolContract,
     Counter,
     Invoice(BytesN<32>),
+    IssuerIndexCount(Address),
+    BuyerIndexCount(Address),
+    StatusIndexCount(u32),
+    IssuerIndexEntry(Address, u32),
+    BuyerIndexEntry(Address, u32),
+    StatusIndexEntry(u32, u32),
+    // O(1) status index using invoice_id as part of key
+    StatusMembership(u32, BytesN<32>),
     InvoicesByIssuer(Address),
     InvoicesByBuyer(Address),
     InvoicesByStatus(u32),
+    ExpiryWindow,
+    SupportedAsset(Address),
+    SupportedAssetCount,
 }
