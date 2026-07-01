@@ -937,7 +937,6 @@ impl InvoiceContract {
         }
         counts
     }
-}
 
     pub fn get_issuer(env: Env, invoice_id: BytesN<32>) -> Address {
         // Returns the issuer address for an invoice.
@@ -991,59 +990,6 @@ impl InvoiceContract {
         env.storage().instance().set(&DataKey::Admin, &new_admin);
         events::ownership_transferred(&env, &admin, &new_admin);
         Self::extend_instance_ttl(&env);
-    }
-
-    pub fn expire_listing(env: Env, invoice_id: BytesN<32>) -> bool {
-        let inv_key = DataKey::Invoice(invoice_id.clone());
-        let mut invoice: Invoice = env
-            .storage()
-            .persistent()
-            .get(&inv_key)
-            .unwrap_or_else(|| panic_with_error!(&env, InvoiceError::NotFound));
-
-        if invoice.status != InvoiceStatus::Listed {
-            panic_with_error!(&env, InvoiceError::InvalidStatusTransition);
-        }
-
-        let admin: Address = env
-            .storage()
-            .instance()
-            .get(&DataKey::Admin)
-            .unwrap_or_else(|| panic_with_error!(&env, InvoiceError::NotFound));
-
-        let is_issuer = env
-            .try_invoke_contract::<(), soroban_sdk::Error>(
-                &env.current_contract_address(),
-                &Symbol::new(&env, "check_auth"),
-                (invoice.issuer.clone(),).into_val(&env),
-            )
-            .is_ok();
-
-        if is_issuer {
-            // Already authorized by issuer
-        } else {
-            admin.require_auth();
-        }
-
-        let listed_at = invoice.listed_at.unwrap_or(0);
-        let expiry_window = env
-            .storage()
-            .instance()
-            .get(&DataKey::ExpiryWindow)
-            .unwrap_or(7 * 24 * 60 * 60);
-
-        let current_time = env.ledger().timestamp();
-        if current_time <= listed_at + expiry_window {
-            panic_with_error!(&env, InvoiceError::ListingNotExpired);
-        }
-
-        let prev_status = invoice.status;
-        invoice.status = InvoiceStatus::Expired;
-        env.storage().persistent().set(&inv_key, &invoice);
-
-        self::move_status_index(&env, &invoice_id, prev_status, InvoiceStatus::Expired);
-        events::invoice_expired(&env, &invoice_id);
-        true
     }
 
     fn extend_instance_ttl(env: &Env) {
