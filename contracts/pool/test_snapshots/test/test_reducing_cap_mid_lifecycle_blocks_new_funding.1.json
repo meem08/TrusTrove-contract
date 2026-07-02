@@ -38,6 +38,47 @@
         {
           "function": {
             "contract_fn": {
+<<<<<<< HEAD
+=======
+              "contract_address": "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAARQG5",
+              "function_name": "add_supported_asset",
+              "args": [
+                {
+                  "address": "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAMDR4"
+                }
+              ]
+            }
+          },
+          "sub_invocations": []
+        }
+      ]
+    ],
+    [
+      [
+        "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAD2KM",
+        {
+          "function": {
+            "contract_fn": {
+              "contract_address": "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAARQG5",
+              "function_name": "add_supported_asset",
+              "args": [
+                {
+                  "address": "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAOLZM"
+                }
+              ]
+            }
+          },
+          "sub_invocations": []
+        }
+      ]
+    ],
+    [
+      [
+        "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAD2KM",
+        {
+          "function": {
+            "contract_fn": {
+>>>>>>> 2bc7f3d (test: update ledger snapshots for packed profile storage format)
               "contract_address": "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAVAX5",
               "function_name": "initialize",
               "args": [
@@ -232,6 +273,7 @@
         }
       ]
     ],
+<<<<<<< HEAD
     [
       [
         "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAD2KM",
@@ -251,6 +293,9 @@
         }
       ]
     ],
+=======
+    [],
+>>>>>>> 2bc7f3d (test: update ledger snapshots for packed profile storage format)
     [
       [
         "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAD2KM",
@@ -347,6 +392,7 @@
             "contract": "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAD2KM",
             "key": {
               "ledger_key_nonce": {
+<<<<<<< HEAD
                 "nonce": 115220454072064130
               }
             },
@@ -380,6 +426,8 @@
             "contract": "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAD2KM",
             "key": {
               "ledger_key_nonce": {
+=======
+>>>>>>> 2bc7f3d (test: update ledger snapshots for packed profile storage format)
                 "nonce": 801925984706572462
               }
             },
@@ -446,7 +494,11 @@
             "contract": "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAD2KM",
             "key": {
               "ledger_key_nonce": {
+<<<<<<< HEAD
                 "nonce": 1194852393571756375
+=======
+                "nonce": 2032731177588607455
+>>>>>>> 2bc7f3d (test: update ledger snapshots for packed profile storage format)
               }
             },
             "durability": "temporary"
@@ -461,7 +513,11 @@
                 "contract": "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAD2KM",
                 "key": {
                   "ledger_key_nonce": {
+<<<<<<< HEAD
                     "nonce": 1194852393571756375
+=======
+                    "nonce": 2032731177588607455
+>>>>>>> 2bc7f3d (test: update ledger snapshots for packed profile storage format)
                   }
                 },
                 "durability": "temporary",
@@ -479,7 +535,11 @@
             "contract": "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAD2KM",
             "key": {
               "ledger_key_nonce": {
+<<<<<<< HEAD
                 "nonce": 2032731177588607455
+=======
+                "nonce": 3126073502131104533
+>>>>>>> 2bc7f3d (test: update ledger snapshots for packed profile storage format)
               }
             },
             "durability": "temporary"
@@ -494,7 +554,11 @@
                 "contract": "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAD2KM",
                 "key": {
                   "ledger_key_nonce": {
+<<<<<<< HEAD
                     "nonce": 2032731177588607455
+=======
+                    "nonce": 3126073502131104533
+>>>>>>> 2bc7f3d (test: update ledger snapshots for packed profile storage format)
                   }
                 },
                 "durability": "temporary",
@@ -608,6 +672,141 @@
       [
         {
           "contract_data": {
+<<<<<<< HEAD
+=======
+            "contract": "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAD2KM",
+            "key": {
+              "ledger_key_nonce": {
+                "nonce": 6277191135259896685
+              }
+            },
+            "durability": "temporary"
+          }
+        },
+        [
+          {
+            "last_modified_ledger_seq": 0,
+            "data": {
+              "contract_data": {
+                "ext": "v0",
+                "contract": "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAD2KM",
+                "key": {
+                  "ledger_key_nonce": {
+                    "nonce": 6277191135259896685
+                  }
+                },
+                "durability": "temporary",
+                "val": "void"
+              }
+            },
+            "ext": "v0"
+          },
+          6311999
+        ]
+      ],
+      [
+        {
+          "contract_data": {
+            "contract": "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAD2KM",
+            "key": {
+              "ledger_key_nonce": {
+                "nonce": 8370022561469687789
+              }
+            },
+            "durability": "temporary"
+          }
+        },
+        [
+          {
+            "last_modified_ledger_seq": 0,
+            "data": {
+              "contract_data": {
+                "ext": "v0",
+                "contract": "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAD2KM",
+                "key": {
+                  "ledger_key_nonce": {
+                    "nonce": 8370022561469687789
+                  }
+                },
+                "durability": "temporary",
+                "val": "void"
+              }
+            },
+            "ext": "v0"
+          },
+          6311999
+        ]
+      ],
+      [
+        {
+          "contract_data": {
+            "contract": "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAFCT4",
+            "key": {
+              "ledger_key_nonce": {
+                "nonce": 115220454072064130
+              }
+            },
+            "durability": "temporary"
+          }
+        },
+        [
+          {
+            "last_modified_ledger_seq": 0,
+            "data": {
+              "contract_data": {
+                "ext": "v0",
+                "contract": "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAFCT4",
+                "key": {
+                  "ledger_key_nonce": {
+                    "nonce": 115220454072064130
+                  }
+                },
+                "durability": "temporary",
+                "val": "void"
+              }
+            },
+            "ext": "v0"
+          },
+          6311999
+        ]
+      ],
+      [
+        {
+          "contract_data": {
+            "contract": "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAFCT4",
+            "key": {
+              "ledger_key_nonce": {
+                "nonce": 1194852393571756375
+              }
+            },
+            "durability": "temporary"
+          }
+        },
+        [
+          {
+            "last_modified_ledger_seq": 0,
+            "data": {
+              "contract_data": {
+                "ext": "v0",
+                "contract": "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAFCT4",
+                "key": {
+                  "ledger_key_nonce": {
+                    "nonce": 1194852393571756375
+                  }
+                },
+                "durability": "temporary",
+                "val": "void"
+              }
+            },
+            "ext": "v0"
+          },
+          6311999
+        ]
+      ],
+      [
+        {
+          "contract_data": {
+>>>>>>> 2bc7f3d (test: update ledger snapshots for packed profile storage format)
             "contract": "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAFCT4",
             "key": {
               "ledger_key_nonce": {
@@ -644,7 +843,11 @@
             "contract": "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAFCT4",
             "key": {
               "ledger_key_nonce": {
+<<<<<<< HEAD
                 "nonce": 3126073502131104533
+=======
+                "nonce": 6517132746326325848
+>>>>>>> 2bc7f3d (test: update ledger snapshots for packed profile storage format)
               }
             },
             "durability": "temporary"
@@ -659,6 +862,7 @@
                 "contract": "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAFCT4",
                 "key": {
                   "ledger_key_nonce": {
+<<<<<<< HEAD
                     "nonce": 3126073502131104533
                   }
                 },
@@ -726,6 +930,9 @@
                 "key": {
                   "ledger_key_nonce": {
                     "nonce": 6277191135259896685
+=======
+                    "nonce": 6517132746326325848
+>>>>>>> 2bc7f3d (test: update ledger snapshots for packed profile storage format)
                   }
                 },
                 "durability": "temporary",
@@ -743,7 +950,11 @@
             "contract": "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAITA4",
             "key": {
               "ledger_key_nonce": {
+<<<<<<< HEAD
                 "nonce": 8370022561469687789
+=======
+                "nonce": 5806905060045992000
+>>>>>>> 2bc7f3d (test: update ledger snapshots for packed profile storage format)
               }
             },
             "durability": "temporary"
@@ -758,7 +969,11 @@
                 "contract": "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAITA4",
                 "key": {
                   "ledger_key_nonce": {
+<<<<<<< HEAD
                     "nonce": 8370022561469687789
+=======
+                    "nonce": 5806905060045992000
+>>>>>>> 2bc7f3d (test: update ledger snapshots for packed profile storage format)
                   }
                 },
                 "durability": "temporary",
@@ -887,6 +1102,51 @@
             "key": {
               "vec": [
                 {
+<<<<<<< HEAD
+=======
+                  "address": "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAFCT4"
+                }
+              ]
+            },
+            "durability": "persistent"
+          }
+        },
+        [
+          {
+            "last_modified_ledger_seq": 0,
+            "data": {
+              "contract_data": {
+                "ext": "v0",
+                "contract": "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAMDR4",
+                "key": {
+                  "vec": [
+                    {
+                      "address": "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAFCT4"
+                    }
+                  ]
+                },
+                "durability": "persistent",
+                "val": {
+                  "i128": {
+                    "hi": 0,
+                    "lo": 9800000000
+                  }
+                }
+              }
+            },
+            "ext": "v0"
+          },
+          4095
+        ]
+      ],
+      [
+        {
+          "contract_data": {
+            "contract": "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAMDR4",
+            "key": {
+              "vec": [
+                {
+>>>>>>> 2bc7f3d (test: update ledger snapshots for packed profile storage format)
                   "address": "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAHK3M"
                 }
               ]
@@ -996,7 +1256,11 @@
                 "val": {
                   "i128": {
                     "hi": 0,
+<<<<<<< HEAD
                     "lo": 9800000000
+=======
+                    "lo": 0
+>>>>>>> 2bc7f3d (test: update ledger snapshots for packed profile storage format)
                   }
                 }
               }
@@ -1203,6 +1467,7 @@
             "key": {
               "vec": [
                 {
+<<<<<<< HEAD
                   "symbol": "BuyerIndexCount"
                 },
                 {
@@ -1350,6 +1615,8 @@
             "key": {
               "vec": [
                 {
+=======
+>>>>>>> 2bc7f3d (test: update ledger snapshots for packed profile storage format)
                   "symbol": "Invoice"
                 },
                 {
@@ -1722,7 +1989,63 @@
             "key": {
               "vec": [
                 {
+<<<<<<< HEAD
                   "symbol": "IssuerIndexCount"
+=======
+                  "symbol": "InvoicesByBuyer"
+                },
+                {
+                  "address": "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAHK3M"
+                }
+              ]
+            },
+            "durability": "persistent"
+          }
+        },
+        [
+          {
+            "last_modified_ledger_seq": 0,
+            "data": {
+              "contract_data": {
+                "ext": "v0",
+                "contract": "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAARQG5",
+                "key": {
+                  "vec": [
+                    {
+                      "symbol": "InvoicesByBuyer"
+                    },
+                    {
+                      "address": "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAHK3M"
+                    }
+                  ]
+                },
+                "durability": "persistent",
+                "val": {
+                  "vec": [
+                    {
+                      "bytes": "47dfc0abade3951312dae341d2cc51cdb318d469311b5529cb09fcb087a8ee5e"
+                    },
+                    {
+                      "bytes": "a3499a62d8e11b4dda02df529deea0b6d34d789c019aeba55c4fcfae60bf9029"
+                    }
+                  ]
+                }
+              }
+            },
+            "ext": "v0"
+          },
+          4095
+        ]
+      ],
+      [
+        {
+          "contract_data": {
+            "contract": "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAARQG5",
+            "key": {
+              "vec": [
+                {
+                  "symbol": "InvoicesByIssuer"
+>>>>>>> 2bc7f3d (test: update ledger snapshots for packed profile storage format)
                 },
                 {
                   "address": "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAFCT4"
@@ -1742,7 +2065,11 @@
                 "key": {
                   "vec": [
                     {
+<<<<<<< HEAD
                       "symbol": "IssuerIndexCount"
+=======
+                      "symbol": "InvoicesByIssuer"
+>>>>>>> 2bc7f3d (test: update ledger snapshots for packed profile storage format)
                     },
                     {
                       "address": "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAFCT4"
@@ -1751,7 +2078,18 @@
                 },
                 "durability": "persistent",
                 "val": {
+<<<<<<< HEAD
                   "u32": 2
+=======
+                  "vec": [
+                    {
+                      "bytes": "47dfc0abade3951312dae341d2cc51cdb318d469311b5529cb09fcb087a8ee5e"
+                    },
+                    {
+                      "bytes": "a3499a62d8e11b4dda02df529deea0b6d34d789c019aeba55c4fcfae60bf9029"
+                    }
+                  ]
+>>>>>>> 2bc7f3d (test: update ledger snapshots for packed profile storage format)
                 }
               }
             },
@@ -1767,10 +2105,14 @@
             "key": {
               "vec": [
                 {
+<<<<<<< HEAD
                   "symbol": "IssuerIndexEntry"
                 },
                 {
                   "address": "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAFCT4"
+=======
+                  "symbol": "InvoicesByStatus"
+>>>>>>> 2bc7f3d (test: update ledger snapshots for packed profile storage format)
                 },
                 {
                   "u32": 0
@@ -1790,10 +2132,14 @@
                 "key": {
                   "vec": [
                     {
+<<<<<<< HEAD
                       "symbol": "IssuerIndexEntry"
                     },
                     {
                       "address": "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAFCT4"
+=======
+                      "symbol": "InvoicesByStatus"
+>>>>>>> 2bc7f3d (test: update ledger snapshots for packed profile storage format)
                     },
                     {
                       "u32": 0
@@ -1802,7 +2148,18 @@
                 },
                 "durability": "persistent",
                 "val": {
+<<<<<<< HEAD
                   "bytes": "47dfc0abade3951312dae341d2cc51cdb318d469311b5529cb09fcb087a8ee5e"
+=======
+                  "vec": [
+                    {
+                      "bytes": "47dfc0abade3951312dae341d2cc51cdb318d469311b5529cb09fcb087a8ee5e"
+                    },
+                    {
+                      "bytes": "a3499a62d8e11b4dda02df529deea0b6d34d789c019aeba55c4fcfae60bf9029"
+                    }
+                  ]
+>>>>>>> 2bc7f3d (test: update ledger snapshots for packed profile storage format)
                 }
               }
             },
@@ -1818,10 +2175,14 @@
             "key": {
               "vec": [
                 {
+<<<<<<< HEAD
                   "symbol": "IssuerIndexEntry"
                 },
                 {
                   "address": "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAFCT4"
+=======
+                  "symbol": "InvoicesByStatus"
+>>>>>>> 2bc7f3d (test: update ledger snapshots for packed profile storage format)
                 },
                 {
                   "u32": 1
@@ -1841,10 +2202,14 @@
                 "key": {
                   "vec": [
                     {
+<<<<<<< HEAD
                       "symbol": "IssuerIndexEntry"
                     },
                     {
                       "address": "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAFCT4"
+=======
+                      "symbol": "InvoicesByStatus"
+>>>>>>> 2bc7f3d (test: update ledger snapshots for packed profile storage format)
                     },
                     {
                       "u32": 1
@@ -1853,6 +2218,7 @@
                 },
                 "durability": "persistent",
                 "val": {
+<<<<<<< HEAD
                   "bytes": "a3499a62d8e11b4dda02df529deea0b6d34d789c019aeba55c4fcfae60bf9029"
                 }
               }
@@ -1899,6 +2265,16 @@
                 "durability": "persistent",
                 "val": {
                   "u64": 0
+=======
+                  "vec": [
+                    {
+                      "bytes": "47dfc0abade3951312dae341d2cc51cdb318d469311b5529cb09fcb087a8ee5e"
+                    },
+                    {
+                      "bytes": "a3499a62d8e11b4dda02df529deea0b6d34d789c019aeba55c4fcfae60bf9029"
+                    }
+                  ]
+>>>>>>> 2bc7f3d (test: update ledger snapshots for packed profile storage format)
                 }
               }
             },
@@ -1914,6 +2290,7 @@
             "key": {
               "vec": [
                 {
+<<<<<<< HEAD
                   "symbol": "StatusCount"
                 },
                 {
@@ -1960,6 +2337,9 @@
               "vec": [
                 {
                   "symbol": "StatusCount"
+=======
+                  "symbol": "InvoicesByStatus"
+>>>>>>> 2bc7f3d (test: update ledger snapshots for packed profile storage format)
                 },
                 {
                   "u32": 2
@@ -1979,7 +2359,11 @@
                 "key": {
                   "vec": [
                     {
+<<<<<<< HEAD
                       "symbol": "StatusCount"
+=======
+                      "symbol": "InvoicesByStatus"
+>>>>>>> 2bc7f3d (test: update ledger snapshots for packed profile storage format)
                     },
                     {
                       "u32": 2
@@ -1988,7 +2372,15 @@
                 },
                 "durability": "persistent",
                 "val": {
+<<<<<<< HEAD
                   "u64": 1
+=======
+                  "vec": [
+                    {
+                      "bytes": "47dfc0abade3951312dae341d2cc51cdb318d469311b5529cb09fcb087a8ee5e"
+                    }
+                  ]
+>>>>>>> 2bc7f3d (test: update ledger snapshots for packed profile storage format)
                 }
               }
             },
@@ -2004,10 +2396,17 @@
             "key": {
               "vec": [
                 {
+<<<<<<< HEAD
                   "symbol": "StatusIndexCount"
                 },
                 {
                   "u32": 0
+=======
+                  "symbol": "SupportedAsset"
+                },
+                {
+                  "address": "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAMDR4"
+>>>>>>> 2bc7f3d (test: update ledger snapshots for packed profile storage format)
                 }
               ]
             },
@@ -2024,16 +2423,27 @@
                 "key": {
                   "vec": [
                     {
+<<<<<<< HEAD
                       "symbol": "StatusIndexCount"
                     },
                     {
                       "u32": 0
+=======
+                      "symbol": "SupportedAsset"
+                    },
+                    {
+                      "address": "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAMDR4"
+>>>>>>> 2bc7f3d (test: update ledger snapshots for packed profile storage format)
                     }
                   ]
                 },
                 "durability": "persistent",
                 "val": {
+<<<<<<< HEAD
                   "u32": 2
+=======
+                  "bool": true
+>>>>>>> 2bc7f3d (test: update ledger snapshots for packed profile storage format)
                 }
               }
             },
@@ -2049,10 +2459,17 @@
             "key": {
               "vec": [
                 {
+<<<<<<< HEAD
                   "symbol": "StatusIndexCount"
                 },
                 {
                   "u32": 1
+=======
+                  "symbol": "SupportedAsset"
+                },
+                {
+                  "address": "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAOLZM"
+>>>>>>> 2bc7f3d (test: update ledger snapshots for packed profile storage format)
                 }
               ]
             },
@@ -2069,15 +2486,23 @@
                 "key": {
                   "vec": [
                     {
+<<<<<<< HEAD
                       "symbol": "StatusIndexCount"
                     },
                     {
                       "u32": 1
+=======
+                      "symbol": "SupportedAsset"
+                    },
+                    {
+                      "address": "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAOLZM"
+>>>>>>> 2bc7f3d (test: update ledger snapshots for packed profile storage format)
                     }
                   ]
                 },
                 "durability": "persistent",
                 "val": {
+<<<<<<< HEAD
                   "u32": 2
                 }
               }
@@ -2379,6 +2804,9 @@
                 "durability": "persistent",
                 "val": {
                   "bytes": "47dfc0abade3951312dae341d2cc51cdb318d469311b5529cb09fcb087a8ee5e"
+=======
+                  "bool": true
+>>>>>>> 2bc7f3d (test: update ledger snapshots for packed profile storage format)
                 }
               }
             },
@@ -2457,6 +2885,21 @@
                         "val": {
                           "address": "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAK3IM"
                         }
+<<<<<<< HEAD
+=======
+                      },
+                      {
+                        "key": {
+                          "vec": [
+                            {
+                              "symbol": "SupportedAssetCount"
+                            }
+                          ]
+                        },
+                        "val": {
+                          "u32": 2
+                        }
+>>>>>>> 2bc7f3d (test: update ledger snapshots for packed profile storage format)
                       }
                     ]
                   }
@@ -2547,6 +2990,7 @@
                           }
                         }
                       ]
+<<<<<<< HEAD
                     }
                   ]
                 }
@@ -2620,6 +3064,51 @@
                       "val": {
                         "u64": 0
                       }
+=======
+                    },
+                    {
+                      "map": [
+                        {
+                          "key": {
+                            "symbol": "action"
+                          },
+                          "val": {
+                            "vec": [
+                              {
+                                "symbol": "ReleasedToIssuer"
+                              }
+                            ]
+                          }
+                        },
+                        {
+                          "key": {
+                            "symbol": "amount"
+                          },
+                          "val": {
+                            "u128": {
+                              "hi": 0,
+                              "lo": 9800000000
+                            }
+                          }
+                        },
+                        {
+                          "key": {
+                            "symbol": "invoice_id"
+                          },
+                          "val": {
+                            "bytes": "47dfc0abade3951312dae341d2cc51cdb318d469311b5529cb09fcb087a8ee5e"
+                          }
+                        },
+                        {
+                          "key": {
+                            "symbol": "timestamp"
+                          },
+                          "val": {
+                            "u64": 0
+                          }
+                        }
+                      ]
+>>>>>>> 2bc7f3d (test: update ledger snapshots for packed profile storage format)
                     }
                   ]
                 }
@@ -3249,6 +3738,103 @@
                 "symbol": "fn_call"
               },
               {
+<<<<<<< HEAD
+=======
+                "bytes": "0000000000000000000000000000000000000000000000000000000000000008"
+              },
+              {
+                "symbol": "add_supported_asset"
+              }
+            ],
+            "data": {
+              "address": "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAMDR4"
+            }
+          }
+        }
+      },
+      "failed_call": false
+    },
+    {
+      "event": {
+        "ext": "v0",
+        "contract_id": "0000000000000000000000000000000000000000000000000000000000000008",
+        "type_": "diagnostic",
+        "body": {
+          "v0": {
+            "topics": [
+              {
+                "symbol": "fn_return"
+              },
+              {
+                "symbol": "add_supported_asset"
+              }
+            ],
+            "data": "void"
+          }
+        }
+      },
+      "failed_call": false
+    },
+    {
+      "event": {
+        "ext": "v0",
+        "contract_id": null,
+        "type_": "diagnostic",
+        "body": {
+          "v0": {
+            "topics": [
+              {
+                "symbol": "fn_call"
+              },
+              {
+                "bytes": "0000000000000000000000000000000000000000000000000000000000000008"
+              },
+              {
+                "symbol": "add_supported_asset"
+              }
+            ],
+            "data": {
+              "address": "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAOLZM"
+            }
+          }
+        }
+      },
+      "failed_call": false
+    },
+    {
+      "event": {
+        "ext": "v0",
+        "contract_id": "0000000000000000000000000000000000000000000000000000000000000008",
+        "type_": "diagnostic",
+        "body": {
+          "v0": {
+            "topics": [
+              {
+                "symbol": "fn_return"
+              },
+              {
+                "symbol": "add_supported_asset"
+              }
+            ],
+            "data": "void"
+          }
+        }
+      },
+      "failed_call": false
+    },
+    {
+      "event": {
+        "ext": "v0",
+        "contract_id": null,
+        "type_": "diagnostic",
+        "body": {
+          "v0": {
+            "topics": [
+              {
+                "symbol": "fn_call"
+              },
+              {
+>>>>>>> 2bc7f3d (test: update ledger snapshots for packed profile storage format)
                 "bytes": "000000000000000000000000000000000000000000000000000000000000000a"
               },
               {
@@ -4440,6 +5026,252 @@
       "event": {
         "ext": "v0",
         "contract_id": "000000000000000000000000000000000000000000000000000000000000000a",
+<<<<<<< HEAD
+=======
+        "type_": "diagnostic",
+        "body": {
+          "v0": {
+            "topics": [
+              {
+                "symbol": "fn_call"
+              },
+              {
+                "bytes": "0000000000000000000000000000000000000000000000000000000000000008"
+              },
+              {
+                "symbol": "get_issuer"
+              }
+            ],
+            "data": {
+              "bytes": "47dfc0abade3951312dae341d2cc51cdb318d469311b5529cb09fcb087a8ee5e"
+            }
+          }
+        }
+      },
+      "failed_call": false
+    },
+    {
+      "event": {
+        "ext": "v0",
+        "contract_id": "0000000000000000000000000000000000000000000000000000000000000008",
+        "type_": "diagnostic",
+        "body": {
+          "v0": {
+            "topics": [
+              {
+                "symbol": "fn_return"
+              },
+              {
+                "symbol": "get_issuer"
+              }
+            ],
+            "data": {
+              "address": "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAFCT4"
+            }
+          }
+        }
+      },
+      "failed_call": false
+    },
+    {
+      "event": {
+        "ext": "v0",
+        "contract_id": "000000000000000000000000000000000000000000000000000000000000000a",
+        "type_": "diagnostic",
+        "body": {
+          "v0": {
+            "topics": [
+              {
+                "symbol": "fn_call"
+              },
+              {
+                "bytes": "0000000000000000000000000000000000000000000000000000000000000009"
+              },
+              {
+                "symbol": "release_to_issuer"
+              }
+            ],
+            "data": {
+              "vec": [
+                {
+                  "bytes": "47dfc0abade3951312dae341d2cc51cdb318d469311b5529cb09fcb087a8ee5e"
+                },
+                {
+                  "address": "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAFCT4"
+                }
+              ]
+            }
+          }
+        }
+      },
+      "failed_call": false
+    },
+    {
+      "event": {
+        "ext": "v0",
+        "contract_id": "0000000000000000000000000000000000000000000000000000000000000009",
+        "type_": "diagnostic",
+        "body": {
+          "v0": {
+            "topics": [
+              {
+                "symbol": "fn_call"
+              },
+              {
+                "bytes": "0000000000000000000000000000000000000000000000000000000000000008"
+              },
+              {
+                "symbol": "get_issuer"
+              }
+            ],
+            "data": {
+              "bytes": "47dfc0abade3951312dae341d2cc51cdb318d469311b5529cb09fcb087a8ee5e"
+            }
+          }
+        }
+      },
+      "failed_call": false
+    },
+    {
+      "event": {
+        "ext": "v0",
+        "contract_id": "0000000000000000000000000000000000000000000000000000000000000008",
+        "type_": "diagnostic",
+        "body": {
+          "v0": {
+            "topics": [
+              {
+                "symbol": "fn_return"
+              },
+              {
+                "symbol": "get_issuer"
+              }
+            ],
+            "data": {
+              "address": "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAFCT4"
+            }
+          }
+        }
+      },
+      "failed_call": false
+    },
+    {
+      "event": {
+        "ext": "v0",
+        "contract_id": "0000000000000000000000000000000000000000000000000000000000000009",
+        "type_": "diagnostic",
+        "body": {
+          "v0": {
+            "topics": [
+              {
+                "symbol": "fn_call"
+              },
+              {
+                "bytes": "0000000000000000000000000000000000000000000000000000000000000006"
+              },
+              {
+                "symbol": "transfer"
+              }
+            ],
+            "data": {
+              "vec": [
+                {
+                  "address": "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAATYON"
+                },
+                {
+                  "address": "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAFCT4"
+                },
+                {
+                  "i128": {
+                    "hi": 0,
+                    "lo": 9800000000
+                  }
+                }
+              ]
+            }
+          }
+        }
+      },
+      "failed_call": false
+    },
+    {
+      "event": {
+        "ext": "v0",
+        "contract_id": "0000000000000000000000000000000000000000000000000000000000000006",
+        "type_": "diagnostic",
+        "body": {
+          "v0": {
+            "topics": [
+              {
+                "symbol": "fn_return"
+              },
+              {
+                "symbol": "transfer"
+              }
+            ],
+            "data": "void"
+          }
+        }
+      },
+      "failed_call": false
+    },
+    {
+      "event": {
+        "ext": "v0",
+        "contract_id": "0000000000000000000000000000000000000000000000000000000000000009",
+        "type_": "contract",
+        "body": {
+          "v0": {
+            "topics": [
+              {
+                "symbol": "released_to_issuer"
+              },
+              {
+                "bytes": "47dfc0abade3951312dae341d2cc51cdb318d469311b5529cb09fcb087a8ee5e"
+              },
+              {
+                "address": "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAFCT4"
+              }
+            ],
+            "data": {
+              "u128": {
+                "hi": 0,
+                "lo": 9800000000
+              }
+            }
+          }
+        }
+      },
+      "failed_call": false
+    },
+    {
+      "event": {
+        "ext": "v0",
+        "contract_id": "0000000000000000000000000000000000000000000000000000000000000009",
+        "type_": "diagnostic",
+        "body": {
+          "v0": {
+            "topics": [
+              {
+                "symbol": "fn_return"
+              },
+              {
+                "symbol": "release_to_issuer"
+              }
+            ],
+            "data": {
+              "bool": true
+            }
+          }
+        }
+      },
+      "failed_call": false
+    },
+    {
+      "event": {
+        "ext": "v0",
+        "contract_id": "000000000000000000000000000000000000000000000000000000000000000a",
+>>>>>>> 2bc7f3d (test: update ledger snapshots for packed profile storage format)
         "type_": "contract",
         "body": {
           "v0": {

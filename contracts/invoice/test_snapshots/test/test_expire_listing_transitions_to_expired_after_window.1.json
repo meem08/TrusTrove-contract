@@ -30,6 +30,48 @@
     ],
     [
       [
+<<<<<<< HEAD:contracts/invoice/test_snapshots/test/test_expire_listing_transitions_to_expired_after_window.1.json
+=======
+        "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAK3IM",
+        {
+          "function": {
+            "contract_fn": {
+              "contract_address": "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAITA4",
+              "function_name": "add_supported_asset",
+              "args": [
+                {
+                  "address": "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAMDR4"
+                }
+              ]
+            }
+          },
+          "sub_invocations": []
+        }
+      ]
+    ],
+    [
+      [
+        "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAK3IM",
+        {
+          "function": {
+            "contract_fn": {
+              "contract_address": "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAITA4",
+              "function_name": "set_expiry_window",
+              "args": [
+                {
+                  "u64": 1013423
+                }
+              ]
+            }
+          },
+          "sub_invocations": []
+        }
+      ]
+    ],
+    [],
+    [
+      [
+>>>>>>> 2bc7f3d (test: update ledger snapshots for packed profile storage format):contracts/invoice/test_snapshots/test/prop_expiry_window_bounds_are_respected_across_values.1.json
         "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAFCT4",
         {
           "function": {
@@ -50,7 +92,11 @@
                   }
                 },
                 {
+<<<<<<< HEAD:contracts/invoice/test_snapshots/test/test_expire_listing_transitions_to_expired_after_window.1.json
                   "u64": 86400
+=======
+                  "u64": 1099823
+>>>>>>> 2bc7f3d (test: update ledger snapshots for packed profile storage format):contracts/invoice/test_snapshots/test/prop_expiry_window_bounds_are_respected_across_values.1.json
                 },
                 {
                   "address": "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAMDR4"
@@ -72,7 +118,11 @@
               "function_name": "list_for_financing",
               "args": [
                 {
+<<<<<<< HEAD:contracts/invoice/test_snapshots/test/test_expire_listing_transitions_to_expired_after_window.1.json
                   "bytes": "6132a18f9f7f6d5fc59f53624172304b64b1963911d92063dff063aed35ca7fc"
+=======
+                  "bytes": "599458f8ace30ea8862f2c7d54bb594297e63e050da206ba83b81a1c8740cbaa"
+>>>>>>> 2bc7f3d (test: update ledger snapshots for packed profile storage format):contracts/invoice/test_snapshots/test/prop_expiry_window_bounds_are_respected_across_values.1.json
                 },
                 {
                   "u32": 200
@@ -113,7 +163,11 @@
               "function_name": "expire_listing",
               "args": [
                 {
+<<<<<<< HEAD:contracts/invoice/test_snapshots/test/test_expire_listing_transitions_to_expired_after_window.1.json
                   "bytes": "6132a18f9f7f6d5fc59f53624172304b64b1963911d92063dff063aed35ca7fc"
+=======
+                  "bytes": "599458f8ace30ea8862f2c7d54bb594297e63e050da206ba83b81a1c8740cbaa"
+>>>>>>> 2bc7f3d (test: update ledger snapshots for packed profile storage format):contracts/invoice/test_snapshots/test/prop_expiry_window_bounds_are_respected_across_values.1.json
                 }
               ]
             }
@@ -127,7 +181,11 @@
   "ledger": {
     "protocol_version": 21,
     "sequence_number": 0,
+<<<<<<< HEAD:contracts/invoice/test_snapshots/test/test_expire_listing_transitions_to_expired_after_window.1.json
     "timestamp": 101,
+=======
+    "timestamp": 1013424,
+>>>>>>> 2bc7f3d (test: update ledger snapshots for packed profile storage format):contracts/invoice/test_snapshots/test/prop_expiry_window_bounds_are_respected_across_values.1.json
     "network_id": "0000000000000000000000000000000000000000000000000000000000000000",
     "base_reserve": 0,
     "min_persistent_entry_ttl": 4096,
@@ -416,7 +474,11 @@
                   "symbol": "Invoice"
                 },
                 {
+<<<<<<< HEAD:contracts/invoice/test_snapshots/test/test_expire_listing_transitions_to_expired_after_window.1.json
                   "bytes": "6132a18f9f7f6d5fc59f53624172304b64b1963911d92063dff063aed35ca7fc"
+=======
+                  "bytes": "599458f8ace30ea8862f2c7d54bb594297e63e050da206ba83b81a1c8740cbaa"
+>>>>>>> 2bc7f3d (test: update ledger snapshots for packed profile storage format):contracts/invoice/test_snapshots/test/prop_expiry_window_bounds_are_respected_across_values.1.json
                 }
               ]
             },
@@ -436,7 +498,11 @@
                       "symbol": "Invoice"
                     },
                     {
+<<<<<<< HEAD:contracts/invoice/test_snapshots/test/test_expire_listing_transitions_to_expired_after_window.1.json
                       "bytes": "6132a18f9f7f6d5fc59f53624172304b64b1963911d92063dff063aed35ca7fc"
+=======
+                      "bytes": "599458f8ace30ea8862f2c7d54bb594297e63e050da206ba83b81a1c8740cbaa"
+>>>>>>> 2bc7f3d (test: update ledger snapshots for packed profile storage format):contracts/invoice/test_snapshots/test/prop_expiry_window_bounds_are_respected_across_values.1.json
                     }
                   ]
                 },
@@ -480,7 +546,11 @@
                         "symbol": "due_date"
                       },
                       "val": {
+<<<<<<< HEAD:contracts/invoice/test_snapshots/test/test_expire_listing_transitions_to_expired_after_window.1.json
                         "u64": 86400
+=======
+                        "u64": 1099823
+>>>>>>> 2bc7f3d (test: update ledger snapshots for packed profile storage format):contracts/invoice/test_snapshots/test/prop_expiry_window_bounds_are_respected_across_values.1.json
                       }
                     },
                     {
@@ -530,7 +600,11 @@
                         "symbol": "id"
                       },
                       "val": {
+<<<<<<< HEAD:contracts/invoice/test_snapshots/test/test_expire_listing_transitions_to_expired_after_window.1.json
                         "bytes": "6132a18f9f7f6d5fc59f53624172304b64b1963911d92063dff063aed35ca7fc"
+=======
+                        "bytes": "599458f8ace30ea8862f2c7d54bb594297e63e050da206ba83b81a1c8740cbaa"
+>>>>>>> 2bc7f3d (test: update ledger snapshots for packed profile storage format):contracts/invoice/test_snapshots/test/prop_expiry_window_bounds_are_respected_across_values.1.json
                       }
                     },
                     {
@@ -597,7 +671,60 @@
             "key": {
               "vec": [
                 {
+<<<<<<< HEAD:contracts/invoice/test_snapshots/test/test_expire_listing_transitions_to_expired_after_window.1.json
                   "symbol": "IssuerIndexCount"
+=======
+                  "symbol": "InvoicesByBuyer"
+                },
+                {
+                  "address": "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAHK3M"
+                }
+              ]
+            },
+            "durability": "persistent"
+          }
+        },
+        [
+          {
+            "last_modified_ledger_seq": 0,
+            "data": {
+              "contract_data": {
+                "ext": "v0",
+                "contract": "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAITA4",
+                "key": {
+                  "vec": [
+                    {
+                      "symbol": "InvoicesByBuyer"
+                    },
+                    {
+                      "address": "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAHK3M"
+                    }
+                  ]
+                },
+                "durability": "persistent",
+                "val": {
+                  "vec": [
+                    {
+                      "bytes": "599458f8ace30ea8862f2c7d54bb594297e63e050da206ba83b81a1c8740cbaa"
+                    }
+                  ]
+                }
+              }
+            },
+            "ext": "v0"
+          },
+          4095
+        ]
+      ],
+      [
+        {
+          "contract_data": {
+            "contract": "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAITA4",
+            "key": {
+              "vec": [
+                {
+                  "symbol": "InvoicesByIssuer"
+>>>>>>> 2bc7f3d (test: update ledger snapshots for packed profile storage format):contracts/invoice/test_snapshots/test/prop_expiry_window_bounds_are_respected_across_values.1.json
                 },
                 {
                   "address": "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAFCT4"
@@ -626,7 +753,15 @@
                 },
                 "durability": "persistent",
                 "val": {
+<<<<<<< HEAD:contracts/invoice/test_snapshots/test/test_expire_listing_transitions_to_expired_after_window.1.json
                   "u32": 1
+=======
+                  "vec": [
+                    {
+                      "bytes": "599458f8ace30ea8862f2c7d54bb594297e63e050da206ba83b81a1c8740cbaa"
+                    }
+                  ]
+>>>>>>> 2bc7f3d (test: update ledger snapshots for packed profile storage format):contracts/invoice/test_snapshots/test/prop_expiry_window_bounds_are_respected_across_values.1.json
                 }
               }
             },
@@ -677,7 +812,15 @@
                 },
                 "durability": "persistent",
                 "val": {
+<<<<<<< HEAD:contracts/invoice/test_snapshots/test/test_expire_listing_transitions_to_expired_after_window.1.json
                   "bytes": "6132a18f9f7f6d5fc59f53624172304b64b1963911d92063dff063aed35ca7fc"
+=======
+                  "vec": [
+                    {
+                      "bytes": "599458f8ace30ea8862f2c7d54bb594297e63e050da206ba83b81a1c8740cbaa"
+                    }
+                  ]
+>>>>>>> 2bc7f3d (test: update ledger snapshots for packed profile storage format):contracts/invoice/test_snapshots/test/prop_expiry_window_bounds_are_respected_across_values.1.json
                 }
               }
             },
@@ -767,7 +910,15 @@
                 },
                 "durability": "persistent",
                 "val": {
+<<<<<<< HEAD:contracts/invoice/test_snapshots/test/test_expire_listing_transitions_to_expired_after_window.1.json
                   "u64": 0
+=======
+                  "vec": [
+                    {
+                      "bytes": "599458f8ace30ea8862f2c7d54bb594297e63e050da206ba83b81a1c8740cbaa"
+                    }
+                  ]
+>>>>>>> 2bc7f3d (test: update ledger snapshots for packed profile storage format):contracts/invoice/test_snapshots/test/prop_expiry_window_bounds_are_respected_across_values.1.json
                 }
               }
             },
@@ -812,7 +963,15 @@
                 },
                 "durability": "persistent",
                 "val": {
+<<<<<<< HEAD:contracts/invoice/test_snapshots/test/test_expire_listing_transitions_to_expired_after_window.1.json
                   "u64": 1
+=======
+                  "vec": [
+                    {
+                      "bytes": "599458f8ace30ea8862f2c7d54bb594297e63e050da206ba83b81a1c8740cbaa"
+                    }
+                  ]
+>>>>>>> 2bc7f3d (test: update ledger snapshots for packed profile storage format):contracts/invoice/test_snapshots/test/prop_expiry_window_bounds_are_respected_across_values.1.json
                 }
               }
             },
@@ -1165,7 +1324,11 @@
                           ]
                         },
                         "val": {
+<<<<<<< HEAD:contracts/invoice/test_snapshots/test/test_expire_listing_transitions_to_expired_after_window.1.json
                           "u64": 100
+=======
+                          "u64": 1013423
+>>>>>>> 2bc7f3d (test: update ledger snapshots for packed profile storage format):contracts/invoice/test_snapshots/test/prop_expiry_window_bounds_are_respected_across_values.1.json
                         }
                       },
                       {
@@ -1476,6 +1639,170 @@
                 "bytes": "0000000000000000000000000000000000000000000000000000000000000004"
               },
               {
+<<<<<<< HEAD:contracts/invoice/test_snapshots/test/test_expire_listing_transitions_to_expired_after_window.1.json
+=======
+                "symbol": "add_supported_asset"
+              }
+            ],
+            "data": {
+              "address": "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAMDR4"
+            }
+          }
+        }
+      },
+      "failed_call": false
+    },
+    {
+      "event": {
+        "ext": "v0",
+        "contract_id": "0000000000000000000000000000000000000000000000000000000000000004",
+        "type_": "diagnostic",
+        "body": {
+          "v0": {
+            "topics": [
+              {
+                "symbol": "fn_return"
+              },
+              {
+                "symbol": "add_supported_asset"
+              }
+            ],
+            "data": "void"
+          }
+        }
+      },
+      "failed_call": false
+    },
+    {
+      "event": {
+        "ext": "v0",
+        "contract_id": null,
+        "type_": "diagnostic",
+        "body": {
+          "v0": {
+            "topics": [
+              {
+                "symbol": "fn_call"
+              },
+              {
+                "bytes": "0000000000000000000000000000000000000000000000000000000000000004"
+              },
+              {
+                "symbol": "set_expiry_window"
+              }
+            ],
+            "data": {
+              "u64": 1013423
+            }
+          }
+        }
+      },
+      "failed_call": false
+    },
+    {
+      "event": {
+        "ext": "v0",
+        "contract_id": "0000000000000000000000000000000000000000000000000000000000000004",
+        "type_": "contract",
+        "body": {
+          "v0": {
+            "topics": [
+              {
+                "symbol": "expiry_window_set"
+              }
+            ],
+            "data": {
+              "u64": 1013423
+            }
+          }
+        }
+      },
+      "failed_call": false
+    },
+    {
+      "event": {
+        "ext": "v0",
+        "contract_id": "0000000000000000000000000000000000000000000000000000000000000004",
+        "type_": "diagnostic",
+        "body": {
+          "v0": {
+            "topics": [
+              {
+                "symbol": "fn_return"
+              },
+              {
+                "symbol": "set_expiry_window"
+              }
+            ],
+            "data": "void"
+          }
+        }
+      },
+      "failed_call": false
+    },
+    {
+      "event": {
+        "ext": "v0",
+        "contract_id": null,
+        "type_": "diagnostic",
+        "body": {
+          "v0": {
+            "topics": [
+              {
+                "symbol": "fn_call"
+              },
+              {
+                "bytes": "0000000000000000000000000000000000000000000000000000000000000004"
+              },
+              {
+                "symbol": "get_expiry_window"
+              }
+            ],
+            "data": "void"
+          }
+        }
+      },
+      "failed_call": false
+    },
+    {
+      "event": {
+        "ext": "v0",
+        "contract_id": "0000000000000000000000000000000000000000000000000000000000000004",
+        "type_": "diagnostic",
+        "body": {
+          "v0": {
+            "topics": [
+              {
+                "symbol": "fn_return"
+              },
+              {
+                "symbol": "get_expiry_window"
+              }
+            ],
+            "data": {
+              "u64": 1013423
+            }
+          }
+        }
+      },
+      "failed_call": false
+    },
+    {
+      "event": {
+        "ext": "v0",
+        "contract_id": null,
+        "type_": "diagnostic",
+        "body": {
+          "v0": {
+            "topics": [
+              {
+                "symbol": "fn_call"
+              },
+              {
+                "bytes": "0000000000000000000000000000000000000000000000000000000000000004"
+              },
+              {
+>>>>>>> 2bc7f3d (test: update ledger snapshots for packed profile storage format):contracts/invoice/test_snapshots/test/prop_expiry_window_bounds_are_respected_across_values.1.json
                 "symbol": "create"
               }
             ],
@@ -1494,7 +1821,11 @@
                   }
                 },
                 {
+<<<<<<< HEAD:contracts/invoice/test_snapshots/test/test_expire_listing_transitions_to_expired_after_window.1.json
                   "u64": 86400
+=======
+                  "u64": 1099823
+>>>>>>> 2bc7f3d (test: update ledger snapshots for packed profile storage format):contracts/invoice/test_snapshots/test/prop_expiry_window_bounds_are_respected_across_values.1.json
                 },
                 {
                   "address": "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAMDR4"
@@ -1616,7 +1947,11 @@
                 "symbol": "invoice_created"
               },
               {
+<<<<<<< HEAD:contracts/invoice/test_snapshots/test/test_expire_listing_transitions_to_expired_after_window.1.json
                 "bytes": "6132a18f9f7f6d5fc59f53624172304b64b1963911d92063dff063aed35ca7fc"
+=======
+                "bytes": "599458f8ace30ea8862f2c7d54bb594297e63e050da206ba83b81a1c8740cbaa"
+>>>>>>> 2bc7f3d (test: update ledger snapshots for packed profile storage format):contracts/invoice/test_snapshots/test/prop_expiry_window_bounds_are_respected_across_values.1.json
               },
               {
                 "address": "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAFCT4"
@@ -1655,7 +1990,11 @@
               }
             ],
             "data": {
+<<<<<<< HEAD:contracts/invoice/test_snapshots/test/test_expire_listing_transitions_to_expired_after_window.1.json
               "bytes": "6132a18f9f7f6d5fc59f53624172304b64b1963911d92063dff063aed35ca7fc"
+=======
+              "bytes": "599458f8ace30ea8862f2c7d54bb594297e63e050da206ba83b81a1c8740cbaa"
+>>>>>>> 2bc7f3d (test: update ledger snapshots for packed profile storage format):contracts/invoice/test_snapshots/test/prop_expiry_window_bounds_are_respected_across_values.1.json
             }
           }
         }
@@ -1683,7 +2022,11 @@
             "data": {
               "vec": [
                 {
+<<<<<<< HEAD:contracts/invoice/test_snapshots/test/test_expire_listing_transitions_to_expired_after_window.1.json
                   "bytes": "6132a18f9f7f6d5fc59f53624172304b64b1963911d92063dff063aed35ca7fc"
+=======
+                  "bytes": "599458f8ace30ea8862f2c7d54bb594297e63e050da206ba83b81a1c8740cbaa"
+>>>>>>> 2bc7f3d (test: update ledger snapshots for packed profile storage format):contracts/invoice/test_snapshots/test/prop_expiry_window_bounds_are_respected_across_values.1.json
                 },
                 {
                   "u32": 200
@@ -1707,7 +2050,11 @@
                 "symbol": "invoice_listed"
               },
               {
+<<<<<<< HEAD:contracts/invoice/test_snapshots/test/test_expire_listing_transitions_to_expired_after_window.1.json
                 "bytes": "6132a18f9f7f6d5fc59f53624172304b64b1963911d92063dff063aed35ca7fc"
+=======
+                "bytes": "599458f8ace30ea8862f2c7d54bb594297e63e050da206ba83b81a1c8740cbaa"
+>>>>>>> 2bc7f3d (test: update ledger snapshots for packed profile storage format):contracts/invoice/test_snapshots/test/prop_expiry_window_bounds_are_respected_across_values.1.json
               }
             ],
             "data": {
@@ -1827,7 +2174,11 @@
               }
             ],
             "data": {
+<<<<<<< HEAD:contracts/invoice/test_snapshots/test/test_expire_listing_transitions_to_expired_after_window.1.json
               "bytes": "6132a18f9f7f6d5fc59f53624172304b64b1963911d92063dff063aed35ca7fc"
+=======
+              "bytes": "599458f8ace30ea8862f2c7d54bb594297e63e050da206ba83b81a1c8740cbaa"
+>>>>>>> 2bc7f3d (test: update ledger snapshots for packed profile storage format):contracts/invoice/test_snapshots/test/prop_expiry_window_bounds_are_respected_across_values.1.json
             }
           }
         }
@@ -1910,7 +2261,11 @@
                 "symbol": "invoice_expired"
               },
               {
+<<<<<<< HEAD:contracts/invoice/test_snapshots/test/test_expire_listing_transitions_to_expired_after_window.1.json
                 "bytes": "6132a18f9f7f6d5fc59f53624172304b64b1963911d92063dff063aed35ca7fc"
+=======
+                "bytes": "599458f8ace30ea8862f2c7d54bb594297e63e050da206ba83b81a1c8740cbaa"
+>>>>>>> 2bc7f3d (test: update ledger snapshots for packed profile storage format):contracts/invoice/test_snapshots/test/prop_expiry_window_bounds_are_respected_across_values.1.json
               }
             ],
             "data": "void"
@@ -1961,7 +2316,11 @@
               }
             ],
             "data": {
+<<<<<<< HEAD:contracts/invoice/test_snapshots/test/test_expire_listing_transitions_to_expired_after_window.1.json
               "bytes": "6132a18f9f7f6d5fc59f53624172304b64b1963911d92063dff063aed35ca7fc"
+=======
+              "bytes": "599458f8ace30ea8862f2c7d54bb594297e63e050da206ba83b81a1c8740cbaa"
+>>>>>>> 2bc7f3d (test: update ledger snapshots for packed profile storage format):contracts/invoice/test_snapshots/test/prop_expiry_window_bounds_are_respected_across_values.1.json
             }
           }
         }
@@ -2022,7 +2381,11 @@
                     "symbol": "due_date"
                   },
                   "val": {
+<<<<<<< HEAD:contracts/invoice/test_snapshots/test/test_expire_listing_transitions_to_expired_after_window.1.json
                     "u64": 86400
+=======
+                    "u64": 1099823
+>>>>>>> 2bc7f3d (test: update ledger snapshots for packed profile storage format):contracts/invoice/test_snapshots/test/prop_expiry_window_bounds_are_respected_across_values.1.json
                   }
                 },
                 {
@@ -2072,7 +2435,11 @@
                     "symbol": "id"
                   },
                   "val": {
+<<<<<<< HEAD:contracts/invoice/test_snapshots/test/test_expire_listing_transitions_to_expired_after_window.1.json
                     "bytes": "6132a18f9f7f6d5fc59f53624172304b64b1963911d92063dff063aed35ca7fc"
+=======
+                    "bytes": "599458f8ace30ea8862f2c7d54bb594297e63e050da206ba83b81a1c8740cbaa"
+>>>>>>> 2bc7f3d (test: update ledger snapshots for packed profile storage format):contracts/invoice/test_snapshots/test/prop_expiry_window_bounds_are_respected_across_values.1.json
                   }
                 },
                 {
