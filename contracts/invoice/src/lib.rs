@@ -136,7 +136,6 @@ impl InvoiceContract {
             .instance()
             .get(&DataKey::SupportedAssetCount)
             .unwrap_or(0)
-        Self::extend_instance_ttl(&env);
     }
 
     pub fn create(
