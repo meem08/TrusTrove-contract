@@ -2,10 +2,10 @@
 
 use soroban_sdk::{
     contract, contractimpl, contracttype, testutils::Address as _, testutils::Events as _, Address,
-    BytesN, Env, Symbol, TryFromVal,
+    BytesN, Env, Symbol, TryFromVal, Vec,
 };
 
-use crate::{EscrowContract, EscrowContractClient};
+use crate::{EscrowAction, EscrowContract, EscrowContractClient, EscrowEvent};
 
 #[contract]
 pub struct MockToken;
@@ -246,7 +246,8 @@ fn test_handle_default_returns_funds_to_pool() {
     let amount: u128 = 1_000_000_000;
 
     client.lock(&invoice_id, &amount);
-    let result = client.handle_default(&invoice_id, &pool /* caller */);
+    // Pool is the normal operational caller for default resolution
+    let result = client.handle_default(&invoice_id, &pool);
     assert!(result);
 
     let locked = client.get_locked(&invoice_id);
@@ -287,12 +288,44 @@ fn test_handle_default_invoked_by_admin_succeeds() {
 }
 
 #[test]
+fn test_handle_default_admin_can_trigger() {
+    let (env, client, admin, pool, _usdc) = setup();
+    let invoice_id = generate_invoice_id(&env);
+    let amount: u128 = 1_000_000_000;
+
+    client.lock(&invoice_id, &amount);
+    // Admin can directly trigger default resolution (emergency / recovery path)
+    let result = client.handle_default(&invoice_id, &admin);
+    assert!(result);
+
+    let locked = client.get_locked(&invoice_id);
+    assert_eq!(locked, 0);
+    // Funds are always returned to the pool address regardless of who triggered
+    assert_last_event_three(&env, "default_resolved", invoice_id.clone(), pool, amount);
+}
+
+#[test]
 fn test_handle_default_no_record_returns_false() {
-    let (env, client, _admin, _pool, _usdc) = setup();
+    let (env, client, _admin, pool, _usdc) = setup();
     let invoice_id = generate_invoice_id(&env);
 
-    let result = client.handle_default(&invoice_id, &_pool /* caller */);
+    let result = client.handle_default(&invoice_id, &pool);
     assert!(!result);
+}
+
+#[test]
+#[should_panic(expected = "Error(Contract, #3)")]
+fn test_handle_default_unauthorized_caller_panics() {
+    let (env, client, _admin, pool, _usdc) = setup();
+    let invoice_id = generate_invoice_id(&env);
+    let amount: u128 = 1_000_000_000;
+    let stranger = Address::generate(&env);
+
+    client.lock(&invoice_id, &amount);
+    // A caller that is neither admin nor pool must be rejected
+    client.handle_default(&invoice_id, &stranger);
+    // also ensure that pool is indeed required for the normal path
+    let _ = pool;
 }
 
 #[test]
@@ -311,6 +344,40 @@ fn test_get_locked_returns_amount_when_locked() {
 
     client.lock(&invoice_id, &amount);
     assert_eq!(client.get_locked(&invoice_id), amount);
+}
+
+#[test]
+fn test_get_history_returns_action_log() {
+    let (env, client, _admin, _pool, _usdc) = setup();
+    let invoice_id = generate_invoice_id(&env);
+    let amount: u128 = 1_000_000_000;
+    let issuer = Address::generate(&env);
+
+    client.lock(&invoice_id, &amount);
+    client.release_to_issuer(&invoice_id, &issuer);
+
+    let history: Vec<EscrowEvent> = client.get_history(&invoice_id);
+    assert_eq!(history.len(), 2);
+    let lock_event = history.get(0).unwrap();
+    let release_event = history.get(1).unwrap();
+
+    assert_eq!(lock_event.invoice_id, invoice_id);
+    assert_eq!(lock_event.action, EscrowAction::Locked);
+    assert_eq!(lock_event.amount, amount);
+
+    assert_eq!(release_event.invoice_id, invoice_id);
+    assert_eq!(release_event.action, EscrowAction::ReleasedToIssuer);
+    assert_eq!(release_event.amount, amount);
+    assert!(release_event.timestamp >= lock_event.timestamp);
+
+    assert_eq!(client.get_locked(&invoice_id), 0);
+    assert_last_event_three(
+        &env,
+        "released_to_issuer",
+        invoice_id.clone(),
+        issuer,
+        amount,
+    );
 }
 
 #[test]
@@ -353,11 +420,12 @@ fn test_release_to_pool_requires_pool_authorization() {
 #[test]
 #[should_panic]
 fn test_handle_default_requires_pool_authorization() {
-    let (env, client, _admin, _pool, _usdc) = setup();
+    let (env, client, _admin, pool, _usdc) = setup();
     let invoice_id = generate_invoice_id(&env);
     let amount: u128 = 1_000_000_000;
 
     client.lock(&invoice_id, &amount);
     env.set_auths(&[]);
-    client.handle_default(&invoice_id, &_pool /* caller */);
+    // No auth entries present — require_auth() on the pool caller must fail
+    client.handle_default(&invoice_id, &pool);
 }

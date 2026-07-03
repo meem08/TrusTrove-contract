@@ -1,8 +1,9 @@
 #![cfg(test)]
 
 use soroban_sdk::{
-    contract, contractimpl, contracttype, testutils::Address as _, testutils::Ledger, Address,
-    BytesN, Env, IntoVal, Symbol,
+    contract, contractimpl, contracttype,
+    testutils::{Address as _, Events as _, Ledger},
+    vec, Address, BytesN, Env, IntoVal, Symbol,
 };
 
 use crate::{InvoiceContract, InvoiceContractClient, InvoiceStatus};
@@ -230,6 +231,23 @@ fn test_get_by_status_returns_correct_invoices() {
 
     let created = client.get_by_status(&InvoiceStatus::Created);
     assert_eq!(created.len(), 2);
+}
+
+#[test]
+fn test_expire_listing_transitions_to_expired_after_window() {
+    let (env, client, issuer, buyer, _, usdc) = setup();
+    let due_date = env.ledger().timestamp() + 86400;
+    let invoice_id = client.create(&issuer, &buyer, &1_000_000_000, &due_date, &usdc);
+
+    client.list_for_financing(&invoice_id, &200);
+    client.set_expiry_window(&100);
+    env.ledger().set_timestamp(env.ledger().timestamp() + 101);
+
+    let result = client.expire_listing(&invoice_id);
+    assert!(result);
+
+    let invoice = client.get(&invoice_id);
+    assert_eq!(invoice.status, InvoiceStatus::Expired);
 }
 
 #[test]
@@ -512,6 +530,50 @@ fn test_expire_listing_configurable_window() {
     let result = client.expire_listing(&invoice_id);
     assert!(result);
     assert_eq!(client.get(&invoice_id).status, InvoiceStatus::Expired);
+}
+
+#[test]
+fn test_set_pool_contract_emits_event() {
+    let (env, client, _, _, _, _) = setup();
+    let pool = Address::generate(&env);
+
+    client.set_pool_contract(&pool);
+
+    let contract_id = client.address.clone();
+    let events = env.events().all();
+    assert_eq!(
+        events,
+        vec![
+            &env,
+            (
+                contract_id,
+                (Symbol::new(&env, "pool_contract_set"), pool.clone()).into_val(&env),
+                ().into_val(&env),
+            )
+        ]
+    );
+}
+
+#[test]
+fn test_set_expiry_window_emits_event() {
+    let (env, client, _, _, _, _) = setup();
+    let window: u64 = 86400;
+
+    client.set_expiry_window(&window);
+
+    let contract_id = client.address.clone();
+    let events = env.events().all();
+    assert_eq!(
+        events,
+        vec![
+            &env,
+            (
+                contract_id,
+                (Symbol::new(&env, "expiry_window_set"),).into_val(&env),
+                window.into_val(&env),
+            )
+        ]
+    );
 }
 
 #[test]
