@@ -234,6 +234,23 @@ fn test_get_by_status_returns_correct_invoices() {
 }
 
 #[test]
+fn test_expire_listing_transitions_to_expired_after_window() {
+    let (env, client, issuer, buyer, _, usdc) = setup();
+    let due_date = env.ledger().timestamp() + 86400;
+    let invoice_id = client.create(&issuer, &buyer, &1_000_000_000, &due_date, &usdc);
+
+    client.list_for_financing(&invoice_id, &200);
+    client.set_expiry_window(&100);
+    env.ledger().set_timestamp(env.ledger().timestamp() + 101);
+
+    let result = client.expire_listing(&invoice_id);
+    assert!(result);
+
+    let invoice = client.get(&invoice_id);
+    assert_eq!(invoice.status, InvoiceStatus::Expired);
+}
+
+#[test]
 #[should_panic(expected = "Error(Contract, #2)")]
 fn test_get_unknown_panics() {
     let (env, client, _, _, _, _) = setup();

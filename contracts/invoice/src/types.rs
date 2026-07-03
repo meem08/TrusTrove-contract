@@ -50,3 +50,18 @@ pub enum DataKey {
     StatusIndexEntry(u32, u32),
     ExpiryWindow,
 }
+
+impl InvoiceStatus {
+    pub fn as_str(&self) -> &'static str {
+        match self {
+            InvoiceStatus::Created => "Created",
+            InvoiceStatus::Listed => "Listed",
+            InvoiceStatus::Funded => "Funded",
+            InvoiceStatus::Active => "Active",
+            InvoiceStatus::Confirmed => "Confirmed",
+            InvoiceStatus::Repaid => "Repaid",
+            InvoiceStatus::Defaulted => "Defaulted",
+            InvoiceStatus::Expired => "Expired",
+        }
+    }
+}
