@@ -238,7 +238,7 @@ impl EscrowContract {
         if !env.storage().persistent().has(&key) {
             return false;
         }
-        let _admin: Address = env.storage().instance().get(&DataKey::Admin).unwrap();
+        let admin: Address = env.storage().instance().get(&DataKey::Admin).unwrap();
         let pool: Address = env
             .storage()
             .instance()
@@ -246,6 +246,9 @@ impl EscrowContract {
             .unwrap();
 
         caller.require_auth();
+        if caller != admin && caller != pool {
+            panic!("Not authorized");
+        }
 
         let record: EscrowRecord = env.storage().persistent().get(&key).unwrap();
         let usdc_id: Address = env.storage().instance().get(&DataKey::UsdcAsset).unwrap();
