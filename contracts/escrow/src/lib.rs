@@ -238,7 +238,6 @@ impl EscrowContract {
         if !env.storage().persistent().has(&key) {
             return false;
         }
-
         let admin: Address = env.storage().instance().get(&DataKey::Admin).unwrap();
         let pool: Address = env
             .storage()
