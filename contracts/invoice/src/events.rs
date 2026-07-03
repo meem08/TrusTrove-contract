@@ -89,3 +89,14 @@ pub fn expiry_window_set(env: &Env, window: u64) {
     env.events()
         .publish((Symbol::new(env, "expiry_window_set"),), window);
 }
+
+pub fn ownership_transferred(env: &Env, from: &Address, to: &Address) {
+    env.events().publish(
+        (
+            Symbol::new(env, "ownership_transferred"),
+            from.clone(),
+            to.clone(),
+        ),
+        (),
+    );
+}
