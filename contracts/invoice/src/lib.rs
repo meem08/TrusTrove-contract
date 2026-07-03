@@ -77,67 +77,6 @@ impl InvoiceContract {
         events::pool_contract_set(&env, &pool_contract);
     }
 
-    pub fn add_supported_asset(env: Env, asset: Address) {
-        let admin: Address = env
-            .storage()
-            .instance()
-            .get(&DataKey::Admin)
-            .unwrap_or_else(|| panic_with_error!(&env, InvoiceError::NotFound));
-        admin.require_auth();
-
-        let key = DataKey::SupportedAsset(asset.clone());
-        if env.storage().persistent().has(&key) {
-            return;
-        }
-
-        let count: u32 = env
-            .storage()
-            .instance()
-            .get(&DataKey::SupportedAssetCount)
-            .unwrap_or(0);
-        env.storage()
-            .instance()
-            .set(&DataKey::SupportedAssetCount, &(count + 1));
-        persistent_set(&env, &key, &true);
-    }
-
-    pub fn remove_supported_asset(env: Env, asset: Address) {
-        let admin: Address = env
-            .storage()
-            .instance()
-            .get(&DataKey::Admin)
-            .unwrap_or_else(|| panic_with_error!(&env, InvoiceError::NotFound));
-        admin.require_auth();
-
-        let key = DataKey::SupportedAsset(asset.clone());
-        if !env.storage().persistent().has(&key) {
-            return;
-        }
-
-        let count: u32 = env
-            .storage()
-            .instance()
-            .get(&DataKey::SupportedAssetCount)
-            .unwrap_or(0);
-        env.storage()
-            .instance()
-            .set(&DataKey::SupportedAssetCount, &(count - 1));
-        env.storage().persistent().remove(&key);
-    }
-
-    pub fn is_supported_asset(env: Env, asset: Address) -> bool {
-        env.storage()
-            .persistent()
-            .has(&DataKey::SupportedAsset(asset))
-    }
-
-    pub fn get_supported_asset_count(env: Env) -> u32 {
-        env.storage()
-            .instance()
-            .get(&DataKey::SupportedAssetCount)
-            .unwrap_or(0)
-    }
-
     pub fn create(
         env: Env,
         issuer: Address,
@@ -701,7 +640,7 @@ impl InvoiceContract {
 
         let prev_status = invoice.status;
         invoice.status = InvoiceStatus::Expired;
-        persistent_set(&env, &inv_key, &invoice);
+        env.storage().persistent().set(&inv_key, &invoice);
 
         move_status_index(&env, &invoice_id, prev_status, InvoiceStatus::Expired);
         events::invoice_expired(&env, &invoice_id);
@@ -1056,7 +995,7 @@ fn move_status_index(env: &Env, invoice_id: &BytesN<32>, from: InvoiceStatus, to
 fn increment_status_count(env: &Env, status: InvoiceStatus) {
     let key = DataKey::StatusCount(status as u32);
     let current: u64 = env.storage().persistent().get(&key).unwrap_or(0u64);
-    persistent_set(env, &key, &(current + 1));
+    env.storage().persistent().set(&key, &(current + 1));
 }
 
 fn decrement_status_count(env: &Env, status: InvoiceStatus) {
@@ -1065,7 +1004,7 @@ fn decrement_status_count(env: &Env, status: InvoiceStatus) {
     let next = current
         .checked_sub(1)
         .unwrap_or_else(|| panic_with_error!(env, InvoiceError::InvalidStatusTransition));
-    persistent_set(env, &key, &next);
+    env.storage().persistent().set(&key, &next);
 }
 
 fn read_status_count(env: &Env, status: InvoiceStatus) -> u64 {

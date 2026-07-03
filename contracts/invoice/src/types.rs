@@ -45,6 +45,7 @@ pub enum DataKey {
     IssuerIndexCount(Address),
     BuyerIndexCount(Address),
     StatusIndexCount(u32),
+    StatusCount(u32),
     IssuerIndexEntry(Address, u32),
     BuyerIndexEntry(Address, u32),
     StatusIndexEntry(u32, u32),
