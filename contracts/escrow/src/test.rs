@@ -246,7 +246,7 @@ fn test_handle_default_returns_funds_to_pool() {
     let amount: u128 = 1_000_000_000;
 
     client.lock(&invoice_id, &amount);
-    let result = client.handle_default(&invoice_id, &_pool /* caller */);
+    let result = client.handle_default(&invoice_id, &pool /* caller */);
     assert!(result);
 
     let locked = client.get_locked(&invoice_id);
@@ -283,7 +283,7 @@ fn test_handle_default_invoked_by_admin_succeeds() {
 
     let locked = client.get_locked(&invoice_id);
     assert_eq!(locked, 0);
-    assert_last_event_three(&env, "default_resolved", invoice_id.clone(), pool, amount);
+    assert_last_event_three(&env, "default_resolved", invoice_id.clone(), _pool, amount);
 }
 
 #[test]
@@ -359,5 +359,5 @@ fn test_handle_default_requires_pool_authorization() {
 
     client.lock(&invoice_id, &amount);
     env.set_auths(&[]);
-    client.handle_default(&invoice_id);
+    client.handle_default(&invoice_id, &_pool /* caller */);
 }
