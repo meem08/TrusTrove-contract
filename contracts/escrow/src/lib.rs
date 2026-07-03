@@ -245,14 +245,7 @@ impl EscrowContract {
             .get(&DataKey::PoolContract)
             .unwrap();
 
-        // Require the caller to authenticate themselves, then verify they are
-        // either the admin (emergency/recovery path) or the pool contract
-        // (normal operational path).  Using an explicit `caller` parameter is
-        // the idiomatic Soroban pattern for "one of N authorised parties".
         caller.require_auth();
-        if caller != admin && caller != pool {
-            panic_with_error!(&env, EscrowError::NotAuthorized);
-        }
 
         let record: EscrowRecord = env.storage().persistent().get(&key).unwrap();
         let usdc_id: Address = env.storage().instance().get(&DataKey::UsdcAsset).unwrap();
