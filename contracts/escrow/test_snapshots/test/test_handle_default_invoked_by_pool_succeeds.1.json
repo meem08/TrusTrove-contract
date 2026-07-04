@@ -48,11 +48,7 @@
                 {
                   "u128": {
                     "hi": 0,
-<<<<<<< HEAD:contracts/escrow/test_snapshots/test/test_handle_default_invoked_by_pool_succeeds.1.json
                     "lo": 1000000000
-=======
-                    "lo": 151601415722
->>>>>>> 2bc7f3d (test: update ledger snapshots for packed profile storage format):contracts/escrow/test_snapshots/test/prop_get_locked_returns_zero_after_handle_default.1.json
                   }
                 }
               ]
@@ -433,11 +429,7 @@
                           "val": {
                             "u128": {
                               "hi": 0,
-<<<<<<< HEAD:contracts/escrow/test_snapshots/test/test_handle_default_invoked_by_pool_succeeds.1.json
                               "lo": 1000000000
-=======
-                              "lo": 151601415722
->>>>>>> 2bc7f3d (test: update ledger snapshots for packed profile storage format):contracts/escrow/test_snapshots/test/prop_get_locked_returns_zero_after_handle_default.1.json
                             }
                           }
                         },
@@ -480,11 +472,7 @@
                           "val": {
                             "u128": {
                               "hi": 0,
-<<<<<<< HEAD:contracts/escrow/test_snapshots/test/test_handle_default_invoked_by_pool_succeeds.1.json
                               "lo": 1000000000
-=======
-                              "lo": 151601415722
->>>>>>> 2bc7f3d (test: update ledger snapshots for packed profile storage format):contracts/escrow/test_snapshots/test/prop_get_locked_returns_zero_after_handle_default.1.json
                             }
                           }
                         },
@@ -706,11 +694,7 @@
                 {
                   "u128": {
                     "hi": 0,
-<<<<<<< HEAD:contracts/escrow/test_snapshots/test/test_handle_default_invoked_by_pool_succeeds.1.json
                     "lo": 1000000000
-=======
-                    "lo": 151601415722
->>>>>>> 2bc7f3d (test: update ledger snapshots for packed profile storage format):contracts/escrow/test_snapshots/test/prop_get_locked_returns_zero_after_handle_default.1.json
                   }
                 }
               ]
@@ -749,11 +733,7 @@
                 {
                   "i128": {
                     "hi": 0,
-<<<<<<< HEAD:contracts/escrow/test_snapshots/test/test_handle_default_invoked_by_pool_succeeds.1.json
                     "lo": 1000000000
-=======
-                    "lo": 151601415722
->>>>>>> 2bc7f3d (test: update ledger snapshots for packed profile storage format):contracts/escrow/test_snapshots/test/prop_get_locked_returns_zero_after_handle_default.1.json
                   }
                 }
               ]
@@ -802,11 +782,7 @@
             "data": {
               "u128": {
                 "hi": 0,
-<<<<<<< HEAD:contracts/escrow/test_snapshots/test/test_handle_default_invoked_by_pool_succeeds.1.json
                 "lo": 1000000000
-=======
-                "lo": 151601415722
->>>>>>> 2bc7f3d (test: update ledger snapshots for packed profile storage format):contracts/escrow/test_snapshots/test/prop_get_locked_returns_zero_after_handle_default.1.json
               }
             }
           }
@@ -899,11 +875,7 @@
                 {
                   "i128": {
                     "hi": 0,
-<<<<<<< HEAD:contracts/escrow/test_snapshots/test/test_handle_default_invoked_by_pool_succeeds.1.json
                     "lo": 1000000000
-=======
-                    "lo": 151601415722
->>>>>>> 2bc7f3d (test: update ledger snapshots for packed profile storage format):contracts/escrow/test_snapshots/test/prop_get_locked_returns_zero_after_handle_default.1.json
                   }
                 }
               ]
@@ -955,11 +927,7 @@
             "data": {
               "u128": {
                 "hi": 0,
-<<<<<<< HEAD:contracts/escrow/test_snapshots/test/test_handle_default_invoked_by_pool_succeeds.1.json
                 "lo": 1000000000
-=======
-                "lo": 151601415722
->>>>>>> 2bc7f3d (test: update ledger snapshots for packed profile storage format):contracts/escrow/test_snapshots/test/prop_get_locked_returns_zero_after_handle_default.1.json
               }
             }
           }
