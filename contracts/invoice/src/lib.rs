@@ -479,8 +479,24 @@ impl InvoiceContract {
             .clone()
             .unwrap_or_else(|| panic_with_error!(&env, InvoiceError::NotFound));
         let face_value = invoice.face_value;
-        let buyer = invoice.buyer.clone();
+        let funded_amount = invoice.funded_amount;
         let funding_asset = invoice.funding_asset.clone();
+
+        let now = env.ledger().timestamp();
+        let funded_at = invoice
+            .funded_at
+            .unwrap_or_else(|| panic_with_error!(&env, InvoiceError::NotFound));
+        let discount = face_value.saturating_sub(funded_amount);
+        let term = invoice.due_date.saturating_sub(funded_at);
+        let elapsed = now.saturating_sub(funded_at);
+        let earned_by_pool = if term == 0 {
+            discount
+        } else {
+            discount * (elapsed as u128) / (term as u128)
+        };
+        let refund_to_buyer = discount.saturating_sub(earned_by_pool);
+
+        let buyer = invoice.buyer.clone();
 
         let token = token::Client::new(&env, &funding_asset);
         token.transfer(&buyer, &pool, &(face_value as i128));
@@ -488,7 +504,13 @@ impl InvoiceContract {
         let mut args = Vec::new(&env);
         args.push_back(invoice_id.clone().into_val(&env));
         args.push_back(face_value.into_val(&env));
-        let _: bool = env.invoke_contract(&pool, &Symbol::new(&env, "receive_repayment"), args);
+        args.push_back(refund_to_buyer.into_val(&env));
+        args.push_back(buyer.into_val(&env));
+        let _: bool = env.invoke_contract(
+            &pool,
+            &Symbol::new(&env, "receive_repayment_with_refund"),
+            args,
+        );
 
         let mut updated = invoice;
         updated.status = InvoiceStatus::Repaid;
