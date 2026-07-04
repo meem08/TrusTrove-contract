@@ -168,6 +168,7 @@ fn fund_and_repay_invoice(te: &TestEnv) -> BytesN<32> {
     te.invoice.mark_shipped(&invoice_id);
     te.invoice.confirm_delivery(&invoice_id, &te.issuer);
     te.invoice.confirm_delivery(&invoice_id, &te.buyer);
+    te.env.ledger().set_timestamp(te.env.ledger().timestamp() + 86401);
     te.invoice.repay(&invoice_id);
     invoice_id
 }
@@ -536,6 +537,7 @@ fn test_lp_position_reflects_current_share_price() {
     te.invoice.mark_shipped(&invoice_id);
     te.invoice.confirm_delivery(&invoice_id, &te.issuer);
     te.invoice.confirm_delivery(&invoice_id, &te.buyer);
+    te.env.ledger().set_timestamp(te.env.ledger().timestamp() + 86401);
     te.invoice.repay(&invoice_id);
 
     let pos = te.pool.get_lp_position(&te.lp);
