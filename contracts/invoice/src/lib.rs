@@ -395,7 +395,11 @@ impl InvoiceContract {
         let term = invoice.due_date.saturating_sub(funded_at);
         let elapsed = now.saturating_sub(funded_at);
 
-        let earned_by_pool = if term == 0 { discount } else { discount * (elapsed as u128) / (term as u128) };
+        let earned_by_pool = if term == 0 {
+            discount
+        } else {
+            discount * (elapsed as u128) / (term as u128)
+        };
         let refund_to_buyer = discount.saturating_sub(earned_by_pool);
 
         let buyer = invoice.buyer.clone();
@@ -409,7 +413,11 @@ impl InvoiceContract {
         args.push_back(face_value.into_val(&env));
         args.push_back(refund_to_buyer.into_val(&env));
         args.push_back(buyer.into_val(&env));
-        let _: bool = env.invoke_contract(&pool, &Symbol::new(&env, "receive_repayment_with_refund"), args);
+        let _: bool = env.invoke_contract(
+            &pool,
+            &Symbol::new(&env, "receive_repayment_with_refund"),
+            args,
+        );
 
         let mut updated = invoice;
         updated.status = InvoiceStatus::Repaid;
