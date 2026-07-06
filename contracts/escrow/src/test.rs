@@ -85,7 +85,7 @@ fn setup_without_auths() -> (
     (env, client, admin, pool, usdc_id)
 }
 
-fn generate_invoice_id(env: &Env, counter: u32) -> BytesN<32> {
+fn generate_invoice_id(env: &Env, counter: u64) -> BytesN<32> {
     let mut arr = [0u8; 32];
     let bytes = (env.ledger().timestamp() + counter).to_be_bytes();
     arr[0..8].copy_from_slice(&bytes);
@@ -169,8 +169,8 @@ fn test_lock_stores_record_and_transfers_usdc() {
     let amount: u128 = 1_000_000_000;
 
     // Check initial balances
-    let pool_balance_before = get_balance(&env, &usdc_id, &pool);
-    let contract_balance_before = get_balance(&env, &usdc_id, &contract_id);
+    let _pool_balance_before = get_balance(&env, &usdc_id, &pool);
+    let _contract_balance_before = get_balance(&env, &usdc_id, &contract_id);
 
     // Execute lock
     let result = client.lock(&invoice_id, &amount);
@@ -224,8 +224,8 @@ fn test_release_to_issuer_sends_correct_amount() {
     client.lock(&invoice_id, &amount);
 
     // Check issuer balance before release
-    let issuer_balance_before = get_balance(&env, &usdc_id, &issuer);
-    let contract_balance_before = get_balance(&env, &usdc_id, &contract_id);
+    let _issuer_balance_before = get_balance(&env, &usdc_id, &issuer);
+    let _contract_balance_before = get_balance(&env, &usdc_id, &contract_id);
 
     // Release to issuer
     let result = client.release_to_issuer(&invoice_id, &issuer);
@@ -252,7 +252,6 @@ fn test_release_to_pool_transfers_correct_amount() {
     let (env, client, _admin, pool, _usdc_id, _contract_id) = setup();
     let invoice_id = generate_invoice_id(&env, 1);
     let amount: u128 = 1_000_000_000;
-    let repayment: u128 = 1_050_000_000;
 
     // Lock funds first
     client.lock(&invoice_id, &amount);
@@ -429,12 +428,11 @@ fn test_get_locked_returns_zero_after_release_to_pool() {
     let (env, client, _admin, _pool, _usdc_id, _contract_id) = setup();
     let invoice_id = generate_invoice_id(&env, 12);
     let amount: u128 = 1_000_000_000;
-    let repayment: u128 = 1_050_000_000;
 
     client.lock(&invoice_id, &amount);
     assert_eq!(client.get_locked(&invoice_id), amount);
 
-    client.release_to_pool(&invoice_id, &repayment);
+    client.release_to_pool(&invoice_id, &amount);
     assert_eq!(client.get_locked(&invoice_id), 0);
 }
 
