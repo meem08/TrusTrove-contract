@@ -494,7 +494,7 @@ impl PoolContract {
         env: Env,
         invoice_id: BytesN<32>,
         amount: u128,
-        refund_amount: u128,
+        refund: u128,
         buyer: Address,
     ) -> bool {
         let invoice_contract: Address = env
@@ -514,17 +514,12 @@ impl PoolContract {
             panic_with_error!(&env, PoolError::InvalidAmount);
         }
 
-        if refund_amount > 0 {
-            let usdc_id: Address = env.storage().instance().get(&DataKey::UsdcAsset).unwrap();
-            let usdc = token::Client::new(&env, &usdc_id);
-            usdc.transfer(
-                &env.current_contract_address(),
-                &buyer,
-                &(refund_amount as i128),
-            );
+        let max_refund = amount.saturating_sub(funded_amount);
+        if refund > max_refund {
+            panic_with_error!(&env, PoolError::InvalidAmount);
         }
 
-        let yield_amount = amount - funded_amount - refund_amount;
+        let yield_amount = amount - funded_amount - refund;
         let total_deposits: u128 = env
             .storage()
             .instance()
@@ -559,7 +554,15 @@ impl PoolContract {
 
         env.storage().persistent().remove(&funded_key);
 
+        // transfer refund back to buyer from pool's USDC balance
+        let usdc_id: Address = env.storage().instance().get(&DataKey::UsdcAsset).unwrap();
+        let usdc = token::Client::new(&env, &usdc_id);
+        if refund > 0 {
+            usdc.transfer(&env.current_contract_address(), &buyer, &(refund as i128));
+        }
+
         events::repayment_received(&env, &invoice_id, amount, yield_amount);
+        Self::extend_instance_ttl(&env);
         true
     }
 
