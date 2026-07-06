@@ -103,6 +103,8 @@ impl PoolContract {
         //
         // # Panics
         // * `InvalidAmount` if `usdc_amount` is zero.
+        // * `MinimumDeposit` if the deposit is too small to mint at least 1 share
+        //   at the current share price (prevents 0-share dust deposits).
         //
         // # Example
         // ```ignore
@@ -112,10 +114,6 @@ impl PoolContract {
         if usdc_amount == 0 {
             panic_with_error!(&env, PoolError::InvalidAmount);
         }
-
-        let usdc_id: Address = env.storage().instance().get(&DataKey::UsdcAsset).unwrap();
-        let usdc = token::Client::new(&env, &usdc_id);
-        usdc.transfer(&lp, &env.current_contract_address(), &(usdc_amount as i128));
 
         let total_shares: u128 = env.storage().instance().get(&DataKey::TotalShares).unwrap();
         let total_deposits: u128 = env
@@ -129,6 +127,21 @@ impl PoolContract {
         } else {
             usdc_amount * total_shares / total_deposits
         };
+
+        // Dust-attack guard: once the pool accrues yield, the share price
+        // (total_deposits / total_shares) rises above 1.0, so a sufficiently
+        // small deposit can round down to 0 shares while its USDC is still
+        // pulled into total_deposits, silently donating the deposit to existing
+        // LPs. Reject any deposit that would mint 0 shares so the caller keeps
+        // their funds. This check runs before the token transfer, so no USDC
+        // leaves the depositor on the rejection path.
+        if shares_to_issue == 0 {
+            panic_with_error!(&env, PoolError::MinimumDeposit);
+        }
+
+        let usdc_id: Address = env.storage().instance().get(&DataKey::UsdcAsset).unwrap();
+        let usdc = token::Client::new(&env, &usdc_id);
+        usdc.transfer(&lp, &env.current_contract_address(), &(usdc_amount as i128));
 
         env.storage()
             .instance()
