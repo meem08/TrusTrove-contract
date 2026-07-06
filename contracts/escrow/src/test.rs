@@ -192,7 +192,7 @@ fn test_lock_only_callable_by_pool() {
     // (pool is mocked to be the caller in setup())
     let result = client.lock(&invoice_id, &amount);
     assert!(result);
-    
+
     // Verify the record was stored
     assert_eq!(client.get_locked(&invoice_id), amount);
 }
@@ -318,7 +318,7 @@ fn test_get_locked_returns_zero_when_empty() {
 #[test]
 fn test_get_locked_returns_zero_for_unknown_id() {
     let (env, client, _admin, _pool, _usdc_id, _contract_id) = setup();
-    
+
     // Generate a random unknown invoice ID
     let unknown_id = generate_invoice_id(&env, 999);
     assert_eq!(client.get_locked(&unknown_id), 0);
@@ -369,7 +369,7 @@ fn test_get_locked_returns_zero_after_release_to_pool() {
 #[test]
 fn test_multiple_invoices_independent() {
     let (env, client, _admin, _pool, _usdc_id, _contract_id) = setup();
-    
+
     let invoice_id_1 = generate_invoice_id(&env, 13);
     let invoice_id_2 = generate_invoice_id(&env, 14);
     let amount_1: u128 = 1_000_000_000;
