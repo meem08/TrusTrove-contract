@@ -1394,8 +1394,7 @@ fn test_create_succeeds_after_admin_verifies_both_parties() {
     client.add_supported_asset(&usdc);
     let due_date = env.ledger().timestamp() + 86400;
 
-    let invoice_id =
-        client.create(&issuer, &buyer, &1_000_000_000, &due_date, &usdc);
+    let invoice_id = client.create(&issuer, &buyer, &1_000_000_000, &due_date, &usdc);
     let invoice = client.get(&invoice_id);
     assert_eq!(invoice.status, InvoiceStatus::Created);
     assert_eq!(invoice.issuer, issuer);
