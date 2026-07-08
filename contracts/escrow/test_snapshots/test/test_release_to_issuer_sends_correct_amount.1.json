@@ -1,6 +1,6 @@
 {
   "generators": {
-    "address": 4,
+    "address": 5,
     "nonce": 0
   },
   "auth": [
@@ -43,7 +43,7 @@
               "function_name": "lock",
               "args": [
                 {
-                  "bytes": "0000000000000001000000000000000000000000000000000000000000000000"
+                  "bytes": "0000000000000005000000000000000000000000000000000000000000000000"
                 },
                 {
                   "u128": {
@@ -58,6 +58,8 @@
         }
       ]
     ],
+    [],
+    [],
     [
       [
         "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAFCT4",
@@ -65,16 +67,13 @@
           "function": {
             "contract_fn": {
               "contract_address": "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAITA4",
-              "function_name": "release_to_pool",
+              "function_name": "release_to_issuer",
               "args": [
                 {
-                  "bytes": "0000000000000001000000000000000000000000000000000000000000000000"
+                  "bytes": "0000000000000005000000000000000000000000000000000000000000000000"
                 },
                 {
-                  "u128": {
-                    "hi": 0,
-                    "lo": 1000000000
-                  }
+                  "address": "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAK3IM"
                 }
               ]
             }
@@ -290,7 +289,7 @@
                 "val": {
                   "i128": {
                     "hi": 0,
-                    "lo": 10000000000000
+                    "lo": 9999000000000
                   }
                 }
               }
@@ -346,6 +345,48 @@
         {
           "contract_data": {
             "contract": "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAHK3M",
+            "key": {
+              "vec": [
+                {
+                  "address": "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAK3IM"
+                }
+              ]
+            },
+            "durability": "persistent"
+          }
+        },
+        [
+          {
+            "last_modified_ledger_seq": 0,
+            "data": {
+              "contract_data": {
+                "ext": "v0",
+                "contract": "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAHK3M",
+                "key": {
+                  "vec": [
+                    {
+                      "address": "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAK3IM"
+                    }
+                  ]
+                },
+                "durability": "persistent",
+                "val": {
+                  "i128": {
+                    "hi": 0,
+                    "lo": 1000000000
+                  }
+                }
+              }
+            },
+            "ext": "v0"
+          },
+          4095
+        ]
+      ],
+      [
+        {
+          "contract_data": {
+            "contract": "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAHK3M",
             "key": "ledger_key_contract_instance",
             "durability": "persistent"
           }
@@ -384,7 +425,7 @@
                   "symbol": "History"
                 },
                 {
-                  "bytes": "0000000000000001000000000000000000000000000000000000000000000000"
+                  "bytes": "0000000000000005000000000000000000000000000000000000000000000000"
                 }
               ]
             },
@@ -404,7 +445,7 @@
                       "symbol": "History"
                     },
                     {
-                      "bytes": "0000000000000001000000000000000000000000000000000000000000000000"
+                      "bytes": "0000000000000005000000000000000000000000000000000000000000000000"
                     }
                   ]
                 },
@@ -441,7 +482,7 @@
                             "symbol": "invoice_id"
                           },
                           "val": {
-                            "bytes": "0000000000000001000000000000000000000000000000000000000000000000"
+                            "bytes": "0000000000000005000000000000000000000000000000000000000000000000"
                           }
                         },
                         {
@@ -463,7 +504,7 @@
                           "val": {
                             "vec": [
                               {
-                                "symbol": "ReleasedToPool"
+                                "symbol": "ReleasedToIssuer"
                               }
                             ]
                           }
@@ -484,7 +525,7 @@
                             "symbol": "invoice_id"
                           },
                           "val": {
-                            "bytes": "0000000000000001000000000000000000000000000000000000000000000000"
+                            "bytes": "0000000000000005000000000000000000000000000000000000000000000000"
                           }
                         },
                         {
@@ -692,7 +733,7 @@
             "data": {
               "vec": [
                 {
-                  "bytes": "0000000000000001000000000000000000000000000000000000000000000000"
+                  "bytes": "0000000000000005000000000000000000000000000000000000000000000000"
                 },
                 {
                   "u128": {
@@ -779,7 +820,7 @@
                 "symbol": "funds_locked"
               },
               {
-                "bytes": "0000000000000001000000000000000000000000000000000000000000000000"
+                "bytes": "0000000000000005000000000000000000000000000000000000000000000000"
               }
             ],
             "data": {
@@ -828,22 +869,123 @@
                 "symbol": "fn_call"
               },
               {
+                "bytes": "0000000000000000000000000000000000000000000000000000000000000003"
+              },
+              {
+                "symbol": "balance"
+              }
+            ],
+            "data": {
+              "address": "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAK3IM"
+            }
+          }
+        }
+      },
+      "failed_call": false
+    },
+    {
+      "event": {
+        "ext": "v0",
+        "contract_id": "0000000000000000000000000000000000000000000000000000000000000003",
+        "type_": "diagnostic",
+        "body": {
+          "v0": {
+            "topics": [
+              {
+                "symbol": "fn_return"
+              },
+              {
+                "symbol": "balance"
+              }
+            ],
+            "data": {
+              "i128": {
+                "hi": 0,
+                "lo": 0
+              }
+            }
+          }
+        }
+      },
+      "failed_call": false
+    },
+    {
+      "event": {
+        "ext": "v0",
+        "contract_id": null,
+        "type_": "diagnostic",
+        "body": {
+          "v0": {
+            "topics": [
+              {
+                "symbol": "fn_call"
+              },
+              {
+                "bytes": "0000000000000000000000000000000000000000000000000000000000000003"
+              },
+              {
+                "symbol": "balance"
+              }
+            ],
+            "data": {
+              "address": "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAITA4"
+            }
+          }
+        }
+      },
+      "failed_call": false
+    },
+    {
+      "event": {
+        "ext": "v0",
+        "contract_id": "0000000000000000000000000000000000000000000000000000000000000003",
+        "type_": "diagnostic",
+        "body": {
+          "v0": {
+            "topics": [
+              {
+                "symbol": "fn_return"
+              },
+              {
+                "symbol": "balance"
+              }
+            ],
+            "data": {
+              "i128": {
+                "hi": 0,
+                "lo": 1000000000
+              }
+            }
+          }
+        }
+      },
+      "failed_call": false
+    },
+    {
+      "event": {
+        "ext": "v0",
+        "contract_id": null,
+        "type_": "diagnostic",
+        "body": {
+          "v0": {
+            "topics": [
+              {
+                "symbol": "fn_call"
+              },
+              {
                 "bytes": "0000000000000000000000000000000000000000000000000000000000000004"
               },
               {
-                "symbol": "release_to_pool"
+                "symbol": "release_to_issuer"
               }
             ],
             "data": {
               "vec": [
                 {
-                  "bytes": "0000000000000001000000000000000000000000000000000000000000000000"
+                  "bytes": "0000000000000005000000000000000000000000000000000000000000000000"
                 },
                 {
-                  "u128": {
-                    "hi": 0,
-                    "lo": 1000000000
-                  }
+                  "address": "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAK3IM"
                 }
               ]
             }
@@ -876,7 +1018,7 @@
                   "address": "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAITA4"
                 },
                 {
-                  "address": "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAFCT4"
+                  "address": "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAK3IM"
                 },
                 {
                   "i128": {
@@ -921,13 +1063,13 @@
           "v0": {
             "topics": [
               {
-                "symbol": "released_to_pool"
+                "symbol": "released_to_issuer"
               },
               {
-                "bytes": "0000000000000001000000000000000000000000000000000000000000000000"
+                "bytes": "0000000000000005000000000000000000000000000000000000000000000000"
               },
               {
-                "address": "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAFCT4"
+                "address": "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAK3IM"
               }
             ],
             "data": {
@@ -953,7 +1095,7 @@
                 "symbol": "fn_return"
               },
               {
-                "symbol": "release_to_pool"
+                "symbol": "release_to_issuer"
               }
             ],
             "data": {
@@ -983,7 +1125,7 @@
               }
             ],
             "data": {
-              "bytes": "0000000000000001000000000000000000000000000000000000000000000000"
+              "bytes": "0000000000000005000000000000000000000000000000000000000000000000"
             }
           }
         }
