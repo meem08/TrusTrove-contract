@@ -316,7 +316,7 @@
   "ledger": {
     "protocol_version": 21,
     "sequence_number": 0,
-    "timestamp": 0,
+    "timestamp": 86401,
     "network_id": "0000000000000000000000000000000000000000000000000000000000000000",
     "base_reserve": 0,
     "min_persistent_entry_ttl": 4096,
@@ -1434,7 +1434,7 @@
                         "symbol": "repaid_at"
                       },
                       "val": {
-                        "u64": 0
+                        "u64": 86401
                       }
                     },
                     {
@@ -4754,7 +4754,7 @@
                 "bytes": "000000000000000000000000000000000000000000000000000000000000000a"
               },
               {
-                "symbol": "receive_repayment"
+                "symbol": "receive_repayment_with_refund"
               }
             ],
             "data": {
@@ -4767,6 +4767,15 @@
                     "hi": 0,
                     "lo": 10000000000
                   }
+                },
+                {
+                  "u128": {
+                    "hi": 0,
+                    "lo": 0
+                  }
+                },
+                {
+                  "address": "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAHK3M"
                 }
               ]
             }
@@ -4823,7 +4832,7 @@
                 "symbol": "fn_return"
               },
               {
-                "symbol": "receive_repayment"
+                "symbol": "receive_repayment_with_refund"
               }
             ],
             "data": {
